@@ -253,7 +253,7 @@
           </h1>
 
           <p class="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-3">
-            Bingung cari letak ruang kuliah, auditorium, halte Bikun, atau kantin di Vokasi UI? Jelajahi setiap sudut kampus secara visual dan interaktif lewat pengalaman <strong class="text-charcoal font-bold">tur virtual 360°</strong> sebelum maupun saat kamu berkunjung.
+            Bingung cari letak ruang kuliah, auditorium, halte Bikun, atau kantin di Sekolah Vokasi UI? Jelajahi setiap sudut kampus secara visual dan interaktif lewat pengalaman <strong class="text-charcoal font-bold">tur virtual 360°</strong> sebelum maupun saat kamu berkunjung.
           </p>
 
           <p class="inline-block text-sm font-bold italic text-pinred bg-pinred-light/60 px-3.5 py-1.5 rounded-xl mb-7">
@@ -410,7 +410,7 @@
             <span>🧭</span> Interactive 360° Virtual Exploration
           </span>
           <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
-            Jelajahi Kampus Vokasi UI Secara <span class="text-leaf">360°</span>
+            Jelajahi Sekolah Vokasi UI Secara <span class="text-leaf">360°</span>
           </h2>
           <p class="text-sm sm:text-base text-stone-600 mt-1 max-w-2xl">
             Geser layar ke kiri atau kanan untuk melihat sekeliling area kampus, klik <strong>Pin Hotspot</strong> untuk membaca info fasilitas, atau klik <strong>Portal Pindah Area</strong> untuk berjalan virtual.
@@ -531,7 +531,7 @@
             <span>🗺️</span> Searchable Campus Directory & Dynamic Pins
           </span>
           <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
-            Peta Interaktif & Direktori <span class="text-leaf">Vokasi UI</span>
+            Peta Interaktif & Direktori <span class="text-leaf"> Sekolah Vokasi UI</span>
           </h2>
           <p class="text-sm sm:text-base text-stone-600 mt-1 max-w-2xl">
             Klik pin di peta atau cari langsung gedung kuliah, kantin, area parkir, dan lokasi event yang sedang berlangsung.
@@ -545,7 +545,7 @@
         <div class="lg:col-span-7 bg-white rounded-3xl p-4 sm:p-6 shadow-soft border border-stone-200/90">
           <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div>
-              <h3 class="font-display font-extrabold text-base sm:text-lg text-charcoal">Peta Kawasan Vokasi UI Depok</h3>
+              <h3 class="font-display font-extrabold text-base sm:text-lg text-charcoal">Peta Kawasan Sekolah Vokasi UI Depok</h3>
               <p class="text-xs text-stone-500">Sesuai tata letak aktual Jl. Tegangan Tinggi – Hutan Kampus UI</p>
             </div>
 
@@ -580,7 +580,7 @@
 
           <!-- Interactive Campus Map Canvas -->
           <div id="campusMapViewport" class="relative w-full rounded-2xl overflow-hidden border-2 border-stone-200 bg-[#DCECD5]">
-            <svg id="campusSvgMap" viewBox="0 0 800 560" class="w-full h-auto block select-none transition-transform duration-200 origin-center" role="img" aria-label="Peta Interaktif Kampus Vokasi UI">
+            <svg id="campusSvgMap" viewBox="0 0 800 560" class="w-full h-auto block select-none transition-transform duration-200 origin-center" role="img" aria-label="Peta Interaktif Sekolah Vokasi UI">
               <defs>
                 <!-- Subtle canopy texture pattern for Satelit Hijau UI mode -->
                 <pattern id="forestCanopyPattern" width="36" height="36" patternUnits="userSpaceOnUse">
@@ -2221,6 +2221,37 @@
           <a href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF" target="_blank" rel="noopener noreferrer" class="text-pinred hover:text-white transition-colors">▶ YouTube @way360ui</a>
         </div>
       </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-stone-400">
+        <div>
+          <p class="font-bold text-stone-200">
+            WAY360 — Kelompok 2 | Kuliah Umum Humas Industri Kreatif (Humas B)
+          </p>
+          <p class="mt-0.5">Sekolah Vokasi Universitas Indonesia • Depok, Jawa Barat</p>
+        </div>
+        <p class="bg-stone-800/90 text-stone-300 px-3.5 py-2 rounded-xl border border-stone-700">
+          Prototype Web Interaktif • Pengembangan Akademik IP WAY360
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       MODALS & TOAST NOTIFICATION (NO ALERT/CONFIRM USED)
+       ===================================================================== -->
+  <!-- YouTube 360° Ecosystem Preview Modal -->
+  <div id="youtubeModal" class="hidden fixed inset-0 z-50 bg-charcoal/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative">
+      <button id="closeYoutubeModalBtn" type="button" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-charcoal font-bold">✕</button>
+      <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-pinred bg-pinred-light px-3 py-1 rounded-full mb-3">
+        ▶ Ekosistem Multiplatform WAY360
+      </span>
+      <h3 class="font-display font-black text-xl text-charcoal mb-2">
+        Video Tur Virtual 360° Penuh di YouTube
+      </h3>
+      <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mb-4">
+        Dalam ekosistem IP <strong>WAY360</strong>, <strong>YouTube</strong> berperan sebagai ruang eksplorasi video 360° berdurasi penuh (<em>walkthrough</em> menyeluruh dari gerbang hingga ruang kelas), sedangkan <strong>Website WAY360</strong> ini berfungsi sebagai pusat navigasi interaktif, direktori gedung, dan panduan rute cepat.
+      </p>
       <!-- Simulated YouTube 360 Video Frame -->
       <a
         href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
@@ -2255,6 +2286,45 @@
       </div>
     </div>
   </div>
+      function renderDirectoryList() {
+        const listEl = document.getElementById('directoryList');
+        const q = state.searchQuery.trim().toLowerCase();
+
+        const filtered = CAMPUS_LOCATIONS.filter(loc => {
+          const matchCat = state.activeCategory === 'all' || loc.category === state.activeCategory;
+          const matchQuery = !q ||
+            loc.name.toLowerCase().includes(q) ||
+            loc.desc.toLowerCase().includes(q) ||
+            loc.landmark.toLowerCase().includes(q);
+          return matchCat && matchQuery;
+        });
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = `
+            <div class="text-center py-8 px-4 bg-cream rounded-2xl border border-stone-200">
+              <p class="font-display font-bold text-sm text-charcoal">Lokasi tidak ditemukan</p>
+              <p class="text-xs text-stone-500 mt-1">Coba kata kunci lain seperti "Kantin", "Auditorium", "VA", atau "VB".</p>
+            </div>
+          `;
+          return;
+        }
+
+        listEl.innerHTML = filtered.map(loc => {
+          const isSelected = loc.id === state.selectedLocationId;
+          return `
+            <div
+              data-dir-id="${loc.id}"
+              class="dir-item-card cursor-pointer rounded-2xl p-4 border-2 transition-all ${
+                isSelected
+                  ? 'bg-leaf-light/40 border-leaf shadow-sm'
+                  : 'bg-cream/60 hover:bg-cream border-transparent hover:border-stone-200'
+              }"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-stone-500">${loc.catLabel} • ${loc.floor}</span>
+                  <h4 class="font-display font-extrabold text-sm sm:text-base text-charcoal mt-0.5">${loc.name}</h4>
+                </div>
                 ${loc.isLiveEvent ? `<span class="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full bg-pinred text-white">LIVE</span>` : ''}
               </div>
               <p class="text-xs text-stone-600 line-clamp-2 mt-1">${loc.desc}</p>
