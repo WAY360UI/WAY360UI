@@ -1,0 +1,2755 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAY360 — See the Way Before You Go | Navigasi Digital Vokasi UI</title>
+  <!-- Google Fonts: Plus Jakarta Sans & Nunito -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#FAF7F2',
+            creamDark: '#F1ECE1',
+            leaf: {
+              DEFAULT: '#5E9E43',
+              dark: '#4A8033',
+              light: '#DCFCE7',
+            },
+            pinred: {
+              DEFAULT: '#E03A3E',
+              dark: '#C12B2F',
+              light: '#FEE2E2',
+            },
+            charcoal: '#1F2937',
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Nunito"', 'sans-serif'],
+          },
+          boxShadow: {
+            'soft': '0 10px 30px -5px rgba(31, 41, 55, 0.06)',
+            'card': '0 4px 20px -2px rgba(94, 158, 67, 0.10)',
+            'pin': '0 8px 20px rgba(224, 58, 62, 0.35)',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #FAF7F2;
+      color: #1F2937;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #5E9E43;
+    }
+
+    /* 360 Panoramic Viewer Styling */
+    .pano-viewport {
+      position: relative;
+      width: 100%;
+      height: 440px;
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      touch-action: pan-y;
+      background: #E0F2FE;
+    }
+    @media (min-width: 768px) {
+      .pano-viewport {
+        height: 520px;
+      }
+    }
+    .pano-viewport:active {
+      cursor: grabbing;
+    }
+    .pano-track {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 4800px; /* Two seamless 2400px panoramic canvases side-by-side */
+      display: flex;
+      will-change: transform;
+    }
+    .pano-segment {
+      position: relative;
+      width: 2400px;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    /* Pulsing Animations for Pins & Hotspots */
+    @keyframes pulseRing {
+      0% {
+        transform: scale(0.85);
+        opacity: 0.85;
+      }
+      70% {
+        transform: scale(1.75);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1.75);
+        opacity: 0;
+      }
+    }
+    .hotspot-pulse::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      background-color: rgba(224, 58, 62, 0.45);
+      animation: pulseRing 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+      z-index: 0;
+    }
+    .hotspot-portal::before {
+      background-color: rgba(94, 158, 67, 0.45);
+    }
+
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    .animate-float {
+      animation: floatSlow 4s ease-in-out infinite;
+    }
+
+    @keyframes dashFlow {
+      to {
+        stroke-dashoffset: -36;
+      }
+    }
+    .route-line-animated {
+      animation: dashFlow 1.2s linear infinite;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-leaf selection:text-white">
+
+  <!-- =====================================================================
+       1. STICKY NAVIGATION BAR
+       ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b border-stone-200/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 md:h-20">
+        <!-- Brand Logo -->
+        <a href="#top" class="flex items-center gap-3 group focus:outline-none">
+          <div class="w-11 h-11 md:w-12 md:h-12 flex-shrink-0 transition-transform duration-300 group-hover:scale-105">
+            <!-- Compact WAY360 SVG Emblem -->
+            <svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-sm" aria-label="Logo WAY360">
+              <circle cx="60" cy="60" r="56" fill="#F3EFE6" stroke="#E5DEC9" stroke-width="3"/>
+              <circle cx="60" cy="60" r="42" fill="#76AC52"/>
+              <!-- Map Contour Lines -->
+              <path d="M25 48 Q45 38 62 52 T98 46" fill="none" stroke="#89BD66" stroke-width="5" stroke-linecap="round"/>
+              <path d="M22 72 Q50 62 72 76 T96 68" fill="none" stroke="#89BD66" stroke-width="5" stroke-linecap="round"/>
+              <!-- Playful White "Way" -->
+              <text x="24" y="61" fill="#FFFFFF" font-family="Nunito, sans-serif" font-weight="900" font-size="25" letter-spacing="-0.5">W</text>
+              <text x="76" y="61" fill="#FFFFFF" font-family="Nunito, sans-serif" font-weight="900" font-size="25">y</text>
+              <!-- Red Pin Icon in center -->
+              <path d="M62 28 C52 28 45 35 45 44 C45 56 62 71 62 71 C62 71 79 56 79 44 C79 35 72 28 62 28 Z" fill="#E03A3E"/>
+              <circle cx="62" cy="44" r="6" fill="#76AC52"/>
+              <!-- Bold Red "360" -->
+              <text x="60" y="91" text-anchor="middle" fill="#E03A3E" font-family="Nunito, sans-serif" font-weight="900" font-size="23">360</text>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <span class="font-display font-black text-xl md:text-2xl tracking-tight text-charcoal">WAY<span class="text-pinred">360</span></span>
+              <span class="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-leaf-light text-leaf-dark">Vokasi UI</span>
+            </div>
+            <p class="text-[11px] font-medium text-stone-500 -mt-0.5">See the Way Before You Go</p>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden lg:flex items-center gap-6 text-sm font-semibold text-stone-700">
+          <a href="#eksplorasi-360" class="hover:text-leaf transition-colors py-2">Eksplorasi 360°</a>
+          <a href="#peta-direktori" class="hover:text-leaf transition-colors py-2">Peta & Direktori</a>
+          <a href="#panduan-rute" class="hover:text-leaf transition-colors py-2">Panduan Rute</a>
+          <a href="#komunitas-tips" class="hover:text-leaf transition-colors py-2">Tips & Komunitas</a>
+          <a href="#ekosistem-merch" class="hover:text-leaf transition-colors py-2">Kolaborasi & Merch</a>
+        </nav>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2.5">
+          <a href="#eksplorasi-360" class="inline-flex items-center gap-2 bg-pinred hover:bg-pinred-dark text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-full shadow-pin transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z"/>
+            </svg>
+            <span>Mulai Tur 360°</span>
+          </a>
+
+          <!-- Mobile Menu Button -->
+          <button id="mobileMenuBtn" type="button" aria-label="Buka Menu" class="lg:hidden p-2.5 rounded-xl bg-white border border-stone-200 text-charcoal hover:bg-stone-100 transition-colors">
+            <svg id="menuIconOpen" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <svg id="menuIconClose" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileMenu" class="hidden lg:hidden bg-white border-b border-stone-200 px-4 pt-2 pb-5 space-y-1.5 shadow-lg">
+      <a href="#eksplorasi-360" class="mobile-nav-link block px-4 py-2.5 rounded-xl font-semibold text-stone-700 hover:bg-leaf-light hover:text-leaf-dark">🧭 Eksplorasi 360° Interaktif</a>
+      <a href="#peta-direktori" class="mobile-nav-link block px-4 py-2.5 rounded-xl font-semibold text-stone-700 hover:bg-leaf-light hover:text-leaf-dark">🗺️ Peta & Direktori Kampus</a>
+      <a href="#panduan-rute" class="mobile-nav-link block px-4 py-2.5 rounded-xl font-semibold text-stone-700 hover:bg-leaf-light hover:text-leaf-dark">♿ Panduan Rute & Aksesibilitas</a>
+      <a href="#komunitas-tips" class="mobile-nav-link block px-4 py-2.5 rounded-xl font-semibold text-stone-700 hover:bg-leaf-light hover:text-leaf-dark">💡 Vokasi Tips & Feedback</a>
+      <a href="#ekosistem-merch" class="mobile-nav-link block px-4 py-2.5 rounded-xl font-semibold text-stone-700 hover:bg-leaf-light hover:text-leaf-dark">🎁 Ekosistem & Official Merch</a>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       2. HERO SECTION
+       ===================================================================== -->
+  <section id="top" class="relative overflow-hidden pt-8 pb-14 md:pt-14 md:pb-20">
+    <!-- Decorative Pastel Blobs -->
+    <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#E0F2FE]/70 blur-3xl"></div>
+    <div class="pointer-events-none absolute top-20 -right-24 w-80 h-80 rounded-full bg-[#DCFCE7]/80 blur-3xl"></div>
+    <div class="pointer-events-none absolute bottom-0 left-1/3 w-72 h-72 rounded-full bg-[#FEF3C7]/70 blur-3xl"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        
+        <!-- Left Content Column -->
+        <div class="lg:col-span-7 text-center lg:text-left">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-stone-200/90 shadow-sm mb-5">
+            <span class="w-2.5 h-2.5 rounded-full bg-leaf animate-pulse"></span>
+            <span class="text-xs font-bold text-stone-700 tracking-wide">Digital Campus Navigation • Program Pendidikan Vokasi UI</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-charcoal leading-[1.15] tracking-tight mb-4">
+            Kenali Kampus Vokasi UI <span class="text-leaf underline decoration-wavy decoration-pinred/40 underline-offset-4">Sebelum Melangkah</span>.
+          </h1>
+
+          <p class="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl mx-auto lg:mx-0 mb-3">
+            Bingung cari letak ruang kuliah, auditorium, halte Bikun, atau kantin di Vokasi UI? Jelajahi setiap sudut kampus secara visual dan interaktif lewat pengalaman <strong class="text-charcoal font-bold">tur virtual 360°</strong> sebelum maupun saat kamu berkunjung.
+          </p>
+
+          <p class="inline-block text-sm font-bold italic text-pinred bg-pinred-light/60 px-3.5 py-1.5 rounded-xl mb-7">
+            “When the direction feels confusing, WAY360 keeps you moving.”
+          </p>
+
+          <!-- Interactive Hero Quick-Search Bar -->
+          <div class="relative max-w-xl mx-auto lg:mx-0 mb-8">
+            <div class="flex items-center bg-white rounded-2xl p-2 shadow-soft border-2 border-stone-200 focus-within:border-leaf transition-colors">
+              <div class="pl-3 pr-2 text-pinred">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/>
+                </svg>
+              </div>
+              <input
+                id="heroSearchInput"
+                type="text"
+                autocomplete="off"
+                placeholder="Mau ke gedung, kelas, atau kantin mana hari ini?"
+                class="w-full py-2.5 px-2 text-sm sm:text-base text-charcoal placeholder-stone-400 focus:outline-none bg-transparent"
+              />
+              <button
+                id="heroSearchBtn"
+                type="button"
+                class="flex-shrink-0 bg-leaf hover:bg-leaf-dark text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-colors"
+              >
+                Cari Lokasi
+              </button>
+            </div>
+
+            <!-- Autocomplete Dropdown -->
+            <div id="heroSearchDropdown" class="hidden absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-stone-200 overflow-hidden z-30 text-left">
+              <!-- Populated dynamically via JS -->
+            </div>
+
+            <!-- Quick Suggestion Chips -->
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2 mt-3 text-xs">
+              <span class="text-stone-500 font-semibold">Populer:</span>
+              <button type="button" data-quick-loc="kantin-vokasi" class="quick-chip px-3 py-1 rounded-full bg-white hover:bg-leaf hover:text-white border border-stone-200 text-stone-700 font-semibold transition-colors">🍜 Kantin Vokasi UI</button>
+              <button type="button" data-quick-loc="auditorium" class="quick-chip px-3 py-1 rounded-full bg-white hover:bg-leaf hover:text-white border border-stone-200 text-stone-700 font-semibold transition-colors">🎭 Auditorium (Belakang VC)</button>
+              <button type="button" data-quick-loc="gedung-va" class="quick-chip px-3 py-1 rounded-full bg-white hover:bg-leaf hover:text-white border border-stone-200 text-stone-700 font-semibold transition-colors">🏛️ Gedung VA (Tengah)</button>
+              <button type="button" data-quick-loc="gedung-vb" class="quick-chip px-3 py-1 rounded-full bg-white hover:bg-leaf hover:text-white border border-stone-200 text-stone-700 font-semibold transition-colors">🏫 Gedung VB (Utara)</button>
+            </div>
+          </div>
+
+          <!-- Quick Stats Badges -->
+          <div class="grid grid-cols-3 gap-3 max-w-lg mx-auto lg:mx-0">
+            <div class="bg-white/90 rounded-2xl p-3.5 border border-stone-200/80 shadow-sm">
+              <p class="font-display font-black text-xl sm:text-2xl text-leaf">12+</p>
+              <p class="text-xs font-semibold text-stone-600">Titik Lokasi 360°</p>
+            </div>
+            <div class="bg-white/90 rounded-2xl p-3.5 border border-stone-200/80 shadow-sm">
+              <p class="font-display font-black text-xl sm:text-2xl text-pinred">100%</p>
+              <p class="text-xs font-semibold text-stone-600">Info Rute Aksesibel</p>
+            </div>
+            <div class="bg-white/90 rounded-2xl p-3.5 border border-stone-200/80 shadow-sm">
+              <p class="font-display font-black text-xl sm:text-2xl text-amber-600">Live</p>
+              <p class="text-xs font-semibold text-stone-600">Pin Event & Tenant</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Visual Column: Faithful WAY360 Circular Brand Badge -->
+        <div class="lg:col-span-5 flex justify-center">
+          <div class="relative w-72 h-72 sm:w-88 sm:h-88 md:w-96 md:h-96 animate-float">
+            <!-- Soft Outer Glow -->
+            <div class="absolute inset-4 rounded-full bg-leaf/15 blur-2xl"></div>
+            
+            <!-- Full WAY360 Circular Logo SVG matching IP Canvas -->
+            <svg viewBox="0 0 360 360" class="relative w-full h-full drop-shadow-xl" role="img" aria-label="Badge Logo WAY360 - See the Way Before You Go">
+              <defs>
+                <!-- Top Arc for "See the Way Before You Go." -->
+                <path id="topArc" d="M 48,180 A 132,132 0 1,1 312,180" />
+                <!-- Bottom Arc for secondary quote -->
+                <path id="bottomArc" d="M 38,185 A 142,142 0 0,0 322,185" />
+              </defs>
+
+              <!-- Outer Cream Badge Circle -->
+              <circle cx="180" cy="180" r="172" fill="#F2EDE2" stroke="#E4DDD0" stroke-width="4" />
+
+              <!-- 4 Tiny Compass Pin Dots around inner ring -->
+              <circle cx="180" cy="64" r="4" fill="none" stroke="#1E3A5F" stroke-width="2.5"/>
+              <circle cx="296" cy="180" r="4" fill="none" stroke="#0D9488" stroke-width="2.5"/>
+              <circle cx="180" cy="296" r="4" fill="none" stroke="#F59E0B" stroke-width="2.5"/>
+              <circle cx="64" cy="180" r="4" fill="none" stroke="#EA580C" stroke-width="2.5"/>
+
+              <!-- Inner Leaf Green Map Circle -->
+              <circle cx="180" cy="180" r="108" fill="#77AC52" />
+              
+              <!-- Subtle Topographic / Campus Map Contour Lines -->
+              <g stroke="#8BC066" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.65">
+                <path d="M 85 150 Q 130 120 175 155 T 275 140" />
+                <path d="M 80 205 Q 145 180 195 215 T 280 195" />
+                <path d="M 110 250 Q 165 230 235 255" />
+                <path d="M 120 105 Q 175 125 235 98" />
+              </g>
+
+              <!-- Curved Top Tagline -->
+              <text fill="#C83236" font-family="Nunito, sans-serif" font-weight="900" font-size="22.5" letter-spacing="0.4">
+                <textPath href="#topArc" startOffset="50%" text-anchor="middle">
+                  See the Way Before You Go.
+                </textPath>
+              </text>
+
+              <!-- Curved Bottom Quote -->
+              <text fill="#C83236" font-family="Nunito, sans-serif" font-weight="800" font-size="13.2" letter-spacing="0.2">
+                <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">
+                  "When the direction feels confusing, WAY360 keeps you moving"
+                </textPath>
+              </text>
+
+              <!-- Playful White "W" -->
+              <path d="M 88 122 C 86 155, 92 184, 108 184 C 120 184, 128 164, 132 152 C 136 164, 144 184, 156 184 C 172 184, 178 152, 174 118"
+                    fill="none" stroke="#FFFFFF" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Bold Red Location Pin overlapping center -->
+              <g transform="translate(174, 104)">
+                <path d="M 34 0 C 14 0 0 14 0 34 C 0 60 34 94 34 94 C 34 94 68 60 68 34 C 68 14 54 0 34 0 Z" fill="#D92B2F" />
+                <circle cx="34" cy="34" r="13" fill="#77AC52" />
+              </g>
+
+              <!-- Playful White "y" -->
+              <path d="M 244 142 C 244 162, 254 176, 266 176 C 276 176, 284 164, 286 142 L 284 196 C 282 216, 266 224, 250 218"
+                    fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
+
+              <!-- Bold Red "360" -->
+              <text x="172" y="255" text-anchor="middle" fill="#D92B2F" font-family="Nunito, sans-serif" font-weight="900" font-size="60" letter-spacing="-2" transform="rotate(-5, 172, 255)">
+                360
+              </text>
+            </svg>
+
+            <!-- Floating Interactive Badge Pill -->
+            <a href="#eksplorasi-360" class="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-white hover:bg-charcoal hover:text-white text-charcoal font-bold text-xs px-4 py-2 rounded-full shadow-lg border border-stone-200 flex items-center gap-2 transition-colors">
+              <span class="w-2 h-2 rounded-full bg-pinred"></span>
+              <span>Klik & Geser Panorama 360° Sekarang</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       3. INTERACTIVE 360° VIRTUAL EXPLORATION (FLAGSHIP FEATURE)
+       ===================================================================== -->
+  <section id="eksplorasi-360" class="py-14 md:py-20 bg-white border-y border-stone-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-leaf-dark bg-leaf-light px-3 py-1 rounded-full mb-2">
+            <span>🧭</span> Interactive 360° Virtual Exploration
+          </span>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
+            Jelajahi Kampus Vokasi UI Secara <span class="text-leaf">360°</span>
+          </h2>
+          <p class="text-sm sm:text-base text-stone-600 mt-1 max-w-2xl">
+            Geser layar ke kiri atau kanan untuk melihat sekeliling area kampus, klik <strong>Pin Hotspot</strong> untuk membaca info fasilitas, atau klik <strong>Portal Pindah Area</strong> untuk berjalan virtual.
+          </p>
+        </div>
+
+        <!-- YouTube 360° Ecosystem Trigger -->
+        <div class="self-start md:self-auto flex flex-wrap items-center gap-2">
+          <a
+            href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2.5 bg-pinred hover:bg-pinred-dark text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl shadow-pin transition-all transform hover:-translate-y-0.5"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>Buka Channel @way360ui</span>
+          </a>
+          <button
+            id="openYoutubeModalBtn"
+            type="button"
+            class="inline-flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-2xl shadow-sm transition-colors"
+          >
+            <span>Info Ekosistem 360°</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scene Switcher Tabs -->
+      <div id="sceneTabs" class="flex items-center gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <!-- Main 360° Panoramic Viewer Frame -->
+      <div class="relative rounded-3xl overflow-hidden shadow-xl border-4 border-creamDark bg-stone-900">
+        
+        <!-- Top Overlay HUD: Scene Title & Live Compass -->
+        <div class="absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+          <div class="pointer-events-auto bg-charcoal/85 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl border border-white/15 shadow-lg max-w-md">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-leaf animate-ping"></span>
+              <span id="panoSceneBadge" class="text-[11px] font-bold uppercase tracking-wider text-leaf-light">Area 1 dari 5</span>
+            </div>
+            <h3 id="panoSceneTitle" class="font-display font-extrabold text-sm sm:text-base leading-snug mt-0.5">
+              Gerbang Masuk Jl. Tegangan Tinggi & Bundaran Utama Vokasi UI
+            </h3>
+          </div>
+
+          <!-- Compass & Auto-Rotate Controls -->
+          <div class="pointer-events-auto flex items-center gap-2">
+            <div class="bg-charcoal/85 backdrop-blur-md text-white px-3.5 py-2 rounded-2xl border border-white/15 shadow-lg flex items-center gap-2 text-xs font-extrabold">
+              <span id="compassNeedle" class="inline-block text-pinred transition-transform duration-150">🧭</span>
+              <span id="compassHeading">36° TL</span>
+            </div>
+            <button
+              id="toggleAutoRotateBtn"
+              type="button"
+              class="bg-white/95 hover:bg-leaf hover:text-white text-charcoal px-3.5 py-2 rounded-2xl border border-stone-200 shadow-lg text-xs font-extrabold transition-colors"
+            >
+              <span id="autoRotateLabel">Auto-Putar: OFF</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panoramic Drag/Swipe Viewport -->
+        <div id="panoViewport" class="pano-viewport">
+          <div id="panoTrack" class="pano-track">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- Bottom Overlay Controls: Pan Left/Right & Hint -->
+        <div class="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-2 pointer-events-none">
+          <div class="pointer-events-auto flex items-center gap-2">
+            <button id="panLeftBtn" type="button" aria-label="Geser Kiri" class="w-10 h-10 rounded-full bg-white/95 hover:bg-leaf hover:text-white text-charcoal font-black shadow-lg border border-stone-200 flex items-center justify-center transition-colors">
+              ←
+            </button>
+            <button id="panRightBtn" type="button" aria-label="Geser Kanan" class="w-10 h-10 rounded-full bg-white/95 hover:bg-leaf hover:text-white text-charcoal font-black shadow-lg border border-stone-200 flex items-center justify-center transition-colors">
+              →
+            </button>
+          </div>
+
+          <div class="hidden sm:flex items-center gap-2 bg-charcoal/80 backdrop-blur-md text-white/90 text-xs font-semibold px-4 py-2 rounded-full border border-white/10">
+            <span>👆 Drag / Geser layar atau gunakan tombol panah untuk menoleh 360°</span>
+          </div>
+        </div>
+
+        <!-- Hotspot Information Popover Card -->
+        <div id="hotspotInfoCard" class="hidden absolute bottom-16 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-4 sm:p-5 shadow-2xl border-2 border-pinred/40">
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <span id="hotspotCardTag" class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-pinred-light text-pinred">
+              Info Lokasi
+            </span>
+            <button id="closeHotspotCardBtn" type="button" aria-label="Tutup Info" class="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-charcoal text-xs font-bold flex items-center justify-center">
+              ✕
+            </button>
+          </div>
+          <h4 id="hotspotCardTitle" class="font-display font-black text-base text-charcoal mb-1">Judul Hotspot</h4>
+          <p id="hotspotCardDesc" class="text-xs text-stone-600 leading-relaxed mb-3">Deskripsi lokasi.</p>
+          <div id="hotspotCardActions" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       4. SEARCHABLE CAMPUS DIRECTORY & INTERACTIVE VOKASI UI MAP
+       ===================================================================== -->
+  <section id="peta-direktori" class="py-14 md:py-20 bg-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-pinred bg-pinred-light px-3 py-1 rounded-full mb-2">
+            <span>🗺️</span> Searchable Campus Directory & Dynamic Pins
+          </span>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
+            Peta Interaktif & Direktori <span class="text-leaf">Vokasi UI</span>
+          </h2>
+          <p class="text-sm sm:text-base text-stone-600 mt-1 max-w-2xl">
+            Klik pin di peta atau cari langsung gedung kuliah, kantin, area parkir, dan lokasi event yang sedang berlangsung.
+          </p>
+        </div>
+      </div>
+
+      <!-- Main Map + Directory Two-Column Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- LEFT: Interactive Geographically-Accurate Vokasi UI Campus Map -->
+        <div class="lg:col-span-7 bg-white rounded-3xl p-4 sm:p-6 shadow-soft border border-stone-200/90">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+            <div>
+              <h3 class="font-display font-extrabold text-base sm:text-lg text-charcoal">Peta Kawasan Vokasi UI Depok</h3>
+              <p class="text-xs text-stone-500">Sesuai tata letak aktual Jl. Tegangan Tinggi – Hutan Kampus UI</p>
+            </div>
+
+            <!-- Map Mode Switcher (Denah Bersih vs Satelit Hijau UI) -->
+            <div class="inline-flex rounded-xl bg-cream p-1 border border-stone-200 text-[11px] font-extrabold">
+              <button id="mapModeCleanBtn" type="button" class="px-2.5 py-1.5 rounded-lg bg-leaf text-white shadow-sm transition-all">
+                🗺️ Denah Bersih
+              </button>
+              <button id="mapModeSatBtn" type="button" class="px-2.5 py-1.5 rounded-lg text-stone-600 hover:text-charcoal transition-all">
+                🛰️ Satelit Hijau UI
+              </button>
+            </div>
+          </div>
+
+          <!-- Map Legend & Zoom Controls Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div class="flex flex-wrap gap-1.5 text-[11px] font-bold">
+              <span class="px-2.5 py-1 rounded-full bg-leaf-light text-leaf-dark">● Gedung</span>
+              <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">● Kantin</span>
+              <span class="px-2.5 py-1 rounded-full bg-sky-100 text-sky-800">● Parkir/Akses</span>
+              <span class="px-2.5 py-1 rounded-full bg-pinred-light text-pinred">● Event LIVE</span>
+            </div>
+
+            <!-- Zoom Controls -->
+            <div class="flex items-center gap-1 bg-cream rounded-xl p-1 border border-stone-200 text-xs font-extrabold">
+              <button id="mapZoomOutBtn" type="button" title="Perkecil Peta" class="w-7 h-7 rounded-lg bg-white hover:bg-stone-100 text-charcoal border border-stone-200">−</button>
+              <span id="mapZoomLabel" class="px-2 text-[11px] text-stone-600">100%</span>
+              <button id="mapZoomInBtn" type="button" title="Perbesar Peta" class="w-7 h-7 rounded-lg bg-white hover:bg-stone-100 text-charcoal border border-stone-200">+</button>
+              <button id="mapZoomResetBtn" type="button" title="Reset Peta" class="px-2 h-7 rounded-lg bg-white hover:bg-leaf hover:text-white text-stone-600 border border-stone-200 text-[10px]">Reset</button>
+            </div>
+          </div>
+
+          <!-- Interactive Campus Map Canvas -->
+          <div id="campusMapViewport" class="relative w-full rounded-2xl overflow-hidden border-2 border-stone-200 bg-[#DCECD5]">
+            <svg id="campusSvgMap" viewBox="0 0 800 560" class="w-full h-auto block select-none transition-transform duration-200 origin-center" role="img" aria-label="Peta Interaktif Kampus Vokasi UI">
+              <defs>
+                <!-- Subtle canopy texture pattern for Satelit Hijau UI mode -->
+                <pattern id="forestCanopyPattern" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <circle cx="10" cy="12" r="11" fill="#234820" opacity="0.55" />
+                  <circle cx="26" cy="24" r="12" fill="#2E5E2A" opacity="0.5" />
+                  <circle cx="28" cy="8" r="8" fill="#3B7335" opacity="0.4" />
+                </pattern>
+              </defs>
+
+              <!-- BASE TERRAIN & FOREST (EAST & SOUTHEAST: HUTAN KAMPUS UI) -->
+              <rect id="mapBaseBg" width="800" height="560" fill="#E8F3E2" />
+              <!-- Lush Forest Zone covering East & Southeast Half -->
+              <path id="mapForestZone" d="M 380 0 L 800 0 L 800 560 L 365 560 C 375 470, 415 415, 395 335 C 380 265, 425 220, 430 165 L 635 165 L 635 80 L 380 80 Z" fill="#CBE4BE" />
+              <path id="mapForestTexture" d="M 380 0 L 800 0 L 800 560 L 365 560 C 375 470, 415 415, 395 335 C 380 265, 425 220, 430 165 L 635 165 L 635 80 L 380 80 Z" fill="url(#forestCanopyPattern)" opacity="0.18" />
+
+              <!-- Decorative Tree Clusters in East Forest -->
+              <g id="mapTreeClusters" fill="#89C074" opacity="0.65">
+                <circle cx="690" cy="95" r="34" />
+                <circle cx="745" cy="155" r="42" />
+                <circle cx="670" cy="235" r="48" />
+                <circle cx="545" cy="265" r="52" />
+                <circle cx="475" cy="315" r="44" />
+                <circle cx="615" cy="345" r="56" />
+                <circle cx="730" cy="310" r="46" />
+                <circle cx="515" cy="435" r="54" />
+                <circle cx="645" cy="465" r="58" />
+                <circle cx="435" cy="510" r="42" />
+              </g>
+              <text id="mapForestLabel" x="615" y="295" text-anchor="middle" fill="#2E5A27" font-size="12" font-weight="900" letter-spacing="1" opacity="0.8">AREA HIJAU / HUTAN KAMPUS UI</text>
+
+              <!-- Southeast Footpath toward Arah FIA / Jl. Administrasi -->
+              <path d="M 615 165 L 555 290 L 585 305 L 525 410" fill="none" stroke="#D6D3C9" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M 595 520 L 785 520" stroke="#94A3B8" stroke-width="10" stroke-linecap="round" />
+              <text id="mapFiaLabel" x="690" y="542" text-anchor="middle" fill="#475569" font-size="10" font-weight="800">Arah FIA / Jl. Administrasi →</text>
+
+              <!-- 1. WEST EDGE: JL. TEGANGAN TINGGI & JL. ICHLAS -->
+              <!-- Urban residential block west of Jl. Tegangan Tinggi -->
+              <rect x="0" y="0" width="88" height="560" fill="#DDD8CE" opacity="0.7" />
+              <!-- Jl. Ichlas intersecting from far left -->
+              <path d="M 0 212 L 72 222" stroke="#64748B" stroke-width="18" />
+              <text x="34" y="225" text-anchor="middle" fill="#FFFFFF" font-size="8.5" font-weight="800" transform="rotate(8 34 225)">Jl. Ichlas</text>
+
+              <!-- Jl. Tegangan Tinggi running vertically along West Edge -->
+              <path d="M 102 0 L 42 560" stroke="#475569" stroke-width="26" />
+              <path d="M 102 0 L 42 560" stroke="#F8FAFC" stroke-width="1.5" stroke-dasharray="10 10" />
+              <text x="68" y="330" text-anchor="middle" fill="#FFFFFF" font-size="10.5" font-weight="900" letter-spacing="0.5" transform="rotate(-84 68 330)">JL. TEGANGAN TINGGI</text>
+
+              <!-- 2. INTERNAL CAMPUS ROADS & CENTRAL ROUNDABOUT (BUNDARAN UTAMA) -->
+              <!-- Main Entrance Road from Jl. Tegangan Tinggi into Roundabout & East to Gedung VA/Kantin -->
+              <path d="M 90 108 L 265 135 Q 305 142 355 122 L 545 122" fill="none" stroke="#94A3B8" stroke-width="22" stroke-linecap="round" />
+              <!-- Road South from Roundabout past Sekolah Vokasi VB to Selatan -->
+              <path d="M 295 162 L 235 215 L 122 215 L 105 322 L 385 322" fill="none" stroke="#94A3B8" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Connector road down to Gedung VC & Auditorium -->
+              <path d="M 185 322 L 175 495" fill="none" stroke="#94A3B8" stroke-width="13" stroke-linecap="round" />
+
+              <!-- 2A. NORTHWEST: AREA PARKIR UTAMA (P) -->
+              <g transform="translate(132, 66)">
+                <polygon points="12,0 128,16 116,118 0,104" rx="10" fill="#CBD5E1" stroke="#64748B" stroke-width="2" />
+                <!-- Parking Bay Lines -->
+                <line x1="25" y1="24" x2="105" y2="34" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="6 6" />
+                <line x1="20" y1="54" x2="100" y2="64" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="6 6" />
+                <line x1="15" y1="84" x2="95" y2="94" stroke="#FFFFFF" stroke-width="1.5" stroke-dasharray="6 6" />
+                <circle cx="62" cy="56" r="14" fill="#3B82F6" stroke="#FFFFFF" stroke-width="2.5" />
+                <text x="62" y="61" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="900">P</text>
+                <text x="62" y="98" text-anchor="middle" fill="#1E293B" font-size="8.5" font-weight="800">PARKIR UTAMA</text>
+              </g>
+
+              <!-- 2B. BUNDARAN UTAMA VOKASI UI (ROUNDABOUT) -->
+              <g transform="translate(302, 138)">
+                <circle cx="0" cy="0" r="30" fill="#94A3B8" />
+                <circle cx="0" cy="0" r="17" fill="#5E9E43" stroke="#FFFFFF" stroke-width="2.5" />
+                <circle cx="0" cy="0" r="6" fill="#FAF7F2" />
+                <text x="0" y="-35" text-anchor="middle" fill="#1E293B" font-size="9" font-weight="900">BUNDARAN UTAMA</text>
+              </g>
+
+              <!-- 3. NORTH-CENTER (SOUTHEAST OF ROUNDABOUT): LEMBAGA VOKASI UI (TRAINING CENTER) -->
+              <g transform="translate(338, 166) rotate(32)">
+                <rect width="74" height="28" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <rect x="4" y="4" width="66" height="8" rx="3" fill="#64748B" opacity="0.25" />
+                <text x="37" y="21" text-anchor="middle" fill="#1E293B" font-size="7.5" font-weight="900">TRAINING CENTER</text>
+              </g>
+
+              <!-- 4. NORTHEAST: GEDUNG VOKASI B (GEDUNG VB - TWO PARALLEL WINGS CONNECTED TO KANTIN) -->
+              <g transform="translate(402, 92)">
+                <!-- North Wing VB -->
+                <rect x="0" y="0" width="128" height="24" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <line x1="10" y1="12" x2="118" y2="12" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 4" />
+                <!-- Connector Bridge -->
+                <rect x="54" y="24" width="20" height="10" fill="#CBD5E1" />
+                <!-- South Wing VB -->
+                <rect x="0" y="34" width="128" height="24" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <line x1="10" y1="46" x2="118" y2="46" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 4" />
+                <text x="64" y="-6" text-anchor="middle" fill="#1E293B" font-size="9.5" font-weight="900">GEDUNG VOKASI B (VB)</text>
+              </g>
+
+              <!-- 4B. IMMEDIATELY EAST OF GEDUNG VB: KANTIN VOKASI UNIVERSITAS INDONESIA -->
+              <g transform="translate(544, 102)">
+                <rect width="68" height="48" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2.5" />
+                <text x="34" y="22" text-anchor="middle" fill="#92400E" font-size="9" font-weight="900">KANTIN</text>
+                <text x="34" y="34" text-anchor="middle" fill="#B45309" font-size="8" font-weight="800">VOKASI UI</text>
+              </g>
+
+              <!-- 5. CENTRAL-WEST: GEDUNG VOKASI A (GEDUNG VA - PUSAT ADMINISTRASI & LAB) & SIDE PARKING -->
+              <!-- Narrow Motorcycle / Side Parking Strip along West side -->
+              <g transform="translate(132, 228)">
+                <rect width="78" height="80" rx="8" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.5" />
+                <line x1="20" y1="6" x2="20" y2="74" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 4" />
+                <line x1="40" y1="6" x2="40" y2="74" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 4" />
+                <line x1="60" y1="6" x2="60" y2="74" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="4 4" />
+                <text x="39" y="44" text-anchor="middle" fill="#475569" font-size="7.5" font-weight="800">PARKIR MOTOR</text>
+              </g>
+
+              <!-- Gedung Vokasi A (Gedung VA - Central Two Parallel Wings) -->
+              <g transform="translate(226, 232)">
+                <rect x="0" y="0" width="136" height="26" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <line x1="10" y1="13" x2="126" y2="13" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 4" />
+                <rect x="58" y="26" width="20" height="10" fill="#CBD5E1" />
+                <rect x="0" y="36" width="136" height="26" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <line x1="10" y1="49" x2="126" y2="49" stroke="#94A3B8" stroke-width="2" stroke-dasharray="8 4" />
+                <text x="68" y="75" text-anchor="middle" fill="#1E293B" font-size="9.5" font-weight="900">GEDUNG VOKASI A (VA • PUSAT)</text>
+              </g>
+
+              <!-- 6. SOUTHWEST & SOUTH: GEDUNG BISNIS CENTER (BC), LAPANGAN FUTSAL, GEDUNG VC & AUDITORIUM DI BELAKANG VC -->
+              <!-- Gedung Bisnis Center (BC) along West side -->
+              <g transform="translate(106, 336) rotate(12)">
+                <rect width="70" height="58" rx="8" fill="#CBD5E1" stroke="#475569" stroke-width="2" />
+                <text x="35" y="27" text-anchor="middle" fill="#1E293B" font-size="8" font-weight="900">GD. BISNIS (BC)</text>
+                <text x="35" y="39" text-anchor="middle" fill="#475569" font-size="7" font-weight="700">TEFA & ViCoop</text>
+              </g>
+
+              <!-- Lapangan Futsal / Hall Olahraga (Bottom-Left White Roof near Jl. Tegangan Tinggi) -->
+              <g transform="translate(86, 418) rotate(12)">
+                <rect width="76" height="68" rx="10" fill="#F8FAFC" stroke="#5E9E43" stroke-width="2" />
+                <rect x="8" y="8" width="60" height="52" rx="6" fill="#ECFDF5" stroke="#86EFAC" stroke-width="1.5" />
+                <text x="38" y="33" text-anchor="middle" fill="#166534" font-size="8" font-weight="900">LAP. FUTSAL</text>
+                <text x="38" y="44" text-anchor="middle" fill="#15803D" font-size="7" font-weight="700">& Hall Olahraga</text>
+              </g>
+
+              <!-- Gedung Vokasi Selatan (Gedung VC) + Gedung Auditorium Vokasi UI directly behind (South of) Gedung VC -->
+              <g transform="translate(192, 344)">
+                <!-- North Wing VC -->
+                <rect x="0" y="0" width="134" height="22" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <!-- South Wing VC -->
+                <rect x="0" y="28" width="134" height="22" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="2" />
+                <text x="67" y="61" text-anchor="middle" fill="#1E293B" font-size="9" font-weight="900">GEDUNG VOKASI C (VC)</text>
+
+                <!-- Connector Bridge between Gedung VC & Auditorium -->
+                <rect x="42" y="64" width="22" height="10" fill="#CBD5E1" />
+
+                <!-- Gedung Auditorium Vokasi UI (Directly Behind / South of Gedung VC) -->
+                <rect x="0" y="72" width="106" height="52" rx="8" fill="#FFF1F2" stroke="#E03A3E" stroke-width="2.5" />
+                <!-- Skylight / Rooftop Solar Detail -->
+                <g fill="#E03A3E" opacity="0.22">
+                  <rect x="14" y="80" width="11" height="14" rx="1.5" />
+                  <rect x="30" y="80" width="11" height="14" rx="1.5" />
+                  <rect x="46" y="80" width="11" height="14" rx="1.5" />
+                  <rect x="62" y="80" width="11" height="14" rx="1.5" />
+                  <rect x="78" y="80" width="11" height="14" rx="1.5" />
+                </g>
+                <text x="53" y="106" text-anchor="middle" fill="#991B1B" font-size="8.5" font-weight="900">AUDITORIUM</text>
+                <text x="53" y="117" text-anchor="middle" fill="#B91C1C" font-size="7.5" font-weight="800">VOKASI UI (Belakang VC)</text>
+              </g>
+
+              <!-- Eastern Courtyard / Parking Pocket next to Gedung VC -->
+              <g transform="translate(342, 348)">
+                <rect width="34" height="62" rx="8" fill="#CBD5E1" stroke="#94A3B8" stroke-width="1.5" />
+                <text x="17" y="34" text-anchor="middle" fill="#334155" font-size="7" font-weight="800" transform="rotate(-90 17 34)">PARKIR VC</text>
+              </g>
+
+              <!-- LIVE ANIMATED ROUTE PATH OVERLAY (Drawn dynamically by Smart Route Engine) -->
+              <g id="routePathLayer"></g>
+
+              <!-- DYNAMIC MAP PINS LAYER (Populated by JS) -->
+              <g id="mapPinsLayer"></g>
+            </svg>
+          </div>
+
+          <!-- Selected Location Detail Drawer Card (Below Map) -->
+          <div id="selectedLocationCard" class="mt-5 bg-cream rounded-2xl p-5 border-2 border-leaf/40 transition-all">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Searchable Directory List -->
+        <div class="lg:col-span-5 bg-white rounded-3xl p-4 sm:p-6 shadow-soft border border-stone-200/90">
+          <!-- Search Input -->
+          <div class="relative mb-4">
+            <input
+              id="directorySearchInput"
+              type="text"
+              placeholder="Cari ruangan, kantin, musholla, atau event..."
+              class="w-full pl-10 pr-4 py-3 rounded-2xl bg-cream border border-stone-200 text-sm text-charcoal placeholder-stone-400 focus:outline-none focus:border-leaf transition-colors"
+            />
+            <svg class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 10.5a7.5 7.5 0 0013.15 6.15z"/>
+            </svg>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div id="categoryFilterBar" class="flex flex-wrap gap-1.5 mb-4">
+            <button type="button" data-cat="all" class="cat-pill active px-3 py-1.5 rounded-full text-xs font-bold bg-leaf text-white transition-colors">Semua (11)</button>
+            <button type="button" data-cat="gedung" class="cat-pill px-3 py-1.5 rounded-full text-xs font-bold bg-cream text-stone-700 hover:bg-stone-200 transition-colors">Gedung Kuliah</button>
+            <button type="button" data-cat="kantin" class="cat-pill px-3 py-1.5 rounded-full text-xs font-bold bg-cream text-stone-700 hover:bg-stone-200 transition-colors">Kantin & Fasilitas</button>
+            <button type="button" data-cat="parkir" class="cat-pill px-3 py-1.5 rounded-full text-xs font-bold bg-cream text-stone-700 hover:bg-stone-200 transition-colors">Parkir & Akses</button>
+            <button type="button" data-cat="event" class="cat-pill px-3 py-1.5 rounded-full text-xs font-bold bg-cream text-stone-700 hover:bg-stone-200 transition-colors">🔥 Event LIVE</button>
+          </div>
+
+          <!-- Scrollable Location Cards List -->
+          <div id="directoryList" class="space-y-3 max-h-[540px] overflow-y-auto pr-1">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       5. SMART ROUTE GUIDANCE & ACCESSIBILITY
+       ===================================================================== -->
+  <section id="panduan-rute" class="py-14 md:py-20 bg-white border-y border-stone-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-leaf-dark bg-leaf-light px-3 py-1 rounded-full mb-2">
+          <span>♿</span> Smart Route Guidance & Accessibility
+        </span>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
+          Panduan Rute Langkah demi Langkah
+        </h2>
+        <p class="text-sm sm:text-base text-stone-600 mt-2">
+          Pilih titik keberangkatan dan tujuanmu di Vokasi UI. Sesuaikan pilihan jalur antara <strong>Rute Tercepat</strong> atau <strong>Jalur Aksesibilitas</strong> (ramah kursi roda & tanpa tangga).
+        </p>
+      </div>
+
+      <div class="bg-cream rounded-3xl p-5 sm:p-8 border border-stone-200/90 shadow-soft">
+        <!-- Route Selector Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end mb-6">
+          <!-- Origin Select -->
+          <div class="md:col-span-5">
+            <label for="routeOriginSelect" class="block text-xs font-extrabold uppercase tracking-wider text-stone-500 mb-1.5">
+              📍 Titik Awal Kamu
+            </label>
+            <select id="routeOriginSelect" class="w-full rounded-2xl bg-white border-2 border-stone-200 focus:border-leaf px-4 py-3 text-sm font-bold text-charcoal focus:outline-none">
+              <option value="parkir-utama">Area Parkir Utama (P) — Barat Laut</option>
+              <option value="bundaran-utama">Bundaran Utama Vokasi UI</option>
+              <option value="jl-tegangan-tinggi">Gerbang Masuk Jl. Tegangan Tinggi</option>
+              <option value="parkir-samping">Area Parkir Motor (Sisi Barat Gedung VA)</option>
+            </select>
+          </div>
+
+          <!-- Swap Button -->
+          <div class="md:col-span-2 flex justify-center">
+            <button id="swapRouteBtn" type="button" title="Tukar Titik Awal & Tujuan" class="w-11 h-11 rounded-2xl bg-white hover:bg-leaf hover:text-white text-charcoal border border-stone-200 shadow-sm flex items-center justify-center transition-colors">
+              ⇄
+            </button>
+          </div>
+
+          <!-- Destination Select -->
+          <div class="md:col-span-5">
+            <label for="routeDestSelect" class="block text-xs font-extrabold uppercase tracking-wider text-stone-500 mb-1.5">
+              🏁 Tujuan di Vokasi UI
+            </label>
+            <select id="routeDestSelect" class="w-full rounded-2xl bg-white border-2 border-stone-200 focus:border-pinred px-4 py-3 text-sm font-bold text-charcoal focus:outline-none">
+              <!-- Populated dynamically with all directory locations -->
+            </select>
+          </div>
+        </div>
+
+        <!-- Accessibility Mode Toggle Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white rounded-2xl p-4 border border-stone-200 mb-6">
+          <div>
+            <p class="text-sm font-extrabold text-charcoal">Preferensi Jalur Navigasi</p>
+            <p class="text-xs text-stone-500">Ganti mode untuk menyesuaikan anak tangga vs ramp & guiding block</p>
+          </div>
+
+          <div class="inline-flex rounded-xl bg-cream p-1 border border-stone-200">
+            <button
+              id="modeShortcutBtn"
+              type="button"
+              class="route-mode-btn active flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold bg-leaf text-white shadow-sm transition-all"
+            >
+              ⚡ Rute Tercepat / Shortcut
+            </button>
+            <button
+              id="modeAccessibleBtn"
+              type="button"
+              class="route-mode-btn flex-1 sm:flex-none px-4 py-2 rounded-lg text-xs font-extrabold text-stone-600 hover:text-charcoal transition-all"
+            >
+              ♿ Jalur Aksesibilitas (Tanpa Tangga)
+            </button>
+          </div>
+        </div>
+
+        <!-- Generated Route Result Card -->
+        <div id="routeResultContainer" class="bg-white rounded-2xl p-5 sm:p-6 border border-stone-200">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       6. COMMUNITY TIPS, SOCIAL HUB & FEEDBACK LOOP
+       ===================================================================== -->
+  <section id="komunitas-tips" class="py-14 md:py-20 bg-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+        <div>
+          <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-3 py-1 rounded-full mb-2">
+            <span>💬</span> Community-Based Information & Recommendations
+          </span>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
+            Vokasi Tips, Konten Sosial & <span class="text-pinred">Feedback Loop</span>
+          </h2>
+          <p class="text-sm sm:text-base text-stone-600 mt-1 max-w-2xl">
+            Kumpulan tips praktis dari mahasiswa Vokasi UI, cuplikan panduan singkat ala TikTok/Instagram <strong>@way360.ui</strong>, serta ruang masukan langsung dari pengguna.
+          </p>
+        </div>
+
+        <!-- Tips Filter Pills -->
+        <div class="flex flex-wrap gap-2">
+          <button type="button" data-tip-cat="all" class="tip-filter-btn active px-3.5 py-2 rounded-full text-xs font-bold bg-charcoal text-white">Semua Tips</button>
+          <button type="button" data-tip-cat="kantin" class="tip-filter-btn px-3.5 py-2 rounded-full text-xs font-bold bg-white text-stone-700 border border-stone-200 hover:bg-stone-100">🍜 Kantin</button>
+          <button type="button" data-tip-cat="transport" class="tip-filter-btn px-3.5 py-2 rounded-full text-xs font-bold bg-white text-stone-700 border border-stone-200 hover:bg-stone-100">🚌 Bikun & Rute</button>
+          <button type="button" data-tip-cat="nugas" class="tip-filter-btn px-3.5 py-2 rounded-full text-xs font-bold bg-white text-stone-700 border border-stone-200 hover:bg-stone-100">💻 Spot Nugas</button>
+        </div>
+      </div>
+
+      <!-- Vokasi Tips & Short-Form Social Cards Grid -->
+      <div id="tipsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-12">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <!-- Community Feedback Loop & New Pin Submission -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-white rounded-3xl p-5 sm:p-8 shadow-soft border border-stone-200/90">
+        
+        <!-- Left: Submission Form -->
+        <div class="lg:col-span-6">
+          <span class="inline-block text-[11px] font-extrabold uppercase tracking-wider text-leaf-dark bg-leaf-light px-3 py-1 rounded-full mb-2">
+            Community Feedback Loop
+          </span>
+          <h3 class="font-display font-black text-xl sm:text-2xl text-charcoal mb-1">
+            Bantu Update Info Kampus & Rute!
+          </h3>
+          <p class="text-xs sm:text-sm text-stone-600 mb-5">
+            Punya rekomendasi tempat nugas baru, info <em>tenant</em> kantin, atau koreksi jalur? Kirim masukanmu agar WAY360 makin akurat.
+          </p>
+
+          <form id="communityFeedbackForm" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="fbName" class="block text-xs font-bold text-stone-700 mb-1">Nama / Inisial Pengunjung</label>
+                <input id="fbName" type="text" required placeholder="Contoh: Raka (Maba Humas)" class="w-full rounded-xl bg-cream border border-stone-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-leaf" />
+              </div>
+              <div>
+                <label for="fbType" class="block text-xs font-bold text-stone-700 mb-1">Kategori Masukan</label>
+                <select id="fbType" class="w-full rounded-xl bg-cream border border-stone-200 px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:border-leaf">
+                  <option value="Tips Lokasi">💡 Bagikan Vokasi Tips</option>
+                  <option value="Ajukan Pin Baru">📍 Ajukan Pin / Tenant Baru</option>
+                  <option value="Evaluasi Rute">🧭 Evaluasi Kejelasan Rute</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Interactive Star Rating -->
+            <div>
+              <span class="block text-xs font-bold text-stone-700 mb-1">Seberapa Membantu Navigasi WAY360?</span>
+              <div id="starRatingGroup" class="flex items-center gap-1.5">
+                <button type="button" data-star="1" class="star-btn text-2xl text-amber-400 focus:outline-none">★</button>
+                <button type="button" data-star="2" class="star-btn text-2xl text-amber-400 focus:outline-none">★</button>
+                <button type="button" data-star="3" class="star-btn text-2xl text-amber-400 focus:outline-none">★</button>
+                <button type="button" data-star="4" class="star-btn text-2xl text-amber-400 focus:outline-none">★</button>
+                <button type="button" data-star="5" class="star-btn text-2xl text-amber-400 focus:outline-none">★</button>
+                <span id="starRatingLabel" class="text-xs font-bold text-stone-500 ml-2">5/5 Sangat Membantu!</span>
+              </div>
+            </div>
+
+            <div>
+              <label for="fbMessage" class="block text-xs font-bold text-stone-700 mb-1">Pesan, Tips, atau Usulan Titik Lokasi</label>
+              <textarea id="fbMessage" rows="3" required placeholder="Contoh: Di lantai 2 Gedung VB sekarang ada pojok baca baru yang adem banget buat nunggu kelas..." class="w-full rounded-xl bg-cream border border-stone-200 px-3.5 py-2.5 text-sm focus:outline-none focus:border-leaf"></textarea>
+            </div>
+
+            <!-- Privacy & Consent Policy Checkbox (Aligned with IP Canvas Policy) -->
+            <label class="flex items-start gap-2.5 bg-creamDark/60 p-3 rounded-xl border border-stone-200 cursor-pointer">
+              <input id="fbConsent" type="checkbox" required class="mt-0.5 rounded text-leaf focus:ring-leaf" />
+              <span class="text-[11px] text-stone-600 leading-relaxed">
+                <strong>Kebijakan Privasi & Persetujuan:</strong> Saya setuju masukan ini ditampilkan pada papan komunitas WAY360 dan tidak mencantumkan data pribadi, wajah, atau suara orang lain tanpa izin tertulis.
+              </span>
+            </label>
+
+            <button type="submit" class="w-full sm:w-auto bg-pinred hover:bg-pinred-dark text-white font-bold text-sm px-6 py-3 rounded-xl shadow-pin transition-all">
+              Kirim ke Komunitas WAY360
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Live Community Wall Feed -->
+        <div class="lg:col-span-6 bg-cream rounded-2xl p-4 sm:p-5 border border-stone-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-display font-extrabold text-base text-charcoal">📌 Suara Pengunjung & Mahasiswa</h4>
+              <span id="feedbackCountBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white text-leaf-dark border border-stone-200">3 Masukan</span>
+            </div>
+            <div id="communityWallList" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-stone-200/80 flex items-center justify-between text-[11px] text-stone-500">
+            <span>Moderasi aktif oleh Tim Humas WAY360</span>
+            <span class="font-bold text-leaf-dark">✓ Terverifikasi Komunitas</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       7. ECOSYSTEM, PARTNERSHIPS & OFFICIAL MERCHANDISE
+       ===================================================================== -->
+  <section id="ekosistem-merch" class="py-14 md:py-20 bg-white border-t border-stone-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-leaf-dark bg-leaf-light px-3 py-1 rounded-full mb-2">
+          <span>🚀</span> IP Ecosystem, Partnership & Commercial Path
+        </span>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-black text-charcoal">
+          Ekosistem Kolaborasi & <span class="text-leaf">Official Merch</span>
+        </h2>
+        <p class="text-sm sm:text-base text-stone-600 mt-2">
+          WAY360 tumbuh bersama mitra teknologi kampus, tenant kantin Vokasi, serta produk merchandise fisik yang menemani langkah pertamamu di UI.
+        </p>
+      </div>
+
+      <!-- Strategic Partnerships Row -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14">
+        <div class="rounded-3xl p-6 bg-[#E0F2FE]/55 border border-sky-200">
+          <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-2xl mb-4">💻</div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-sky-800">Tech Collaboration</span>
+          <h3 class="font-display font-black text-lg text-charcoal mt-1 mb-2">Kolaborasi RISTEK FASILKOM UI</h3>
+          <p class="text-xs sm:text-sm text-stone-600 leading-relaxed">
+            Pengembangan infrastruktur web interaktif, optimasi pemetaan digital 360°, serta integrasi data direktori kampus yang ringan diakses dari ponsel.
+          </p>
+        </div>
+
+        <div class="rounded-3xl p-6 bg-[#DCFCE7]/60 border border-emerald-200">
+          <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-2xl mb-4">🎪</div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-leaf-dark">Campus Activation</span>
+          <h3 class="font-display font-black text-lg text-charcoal mt-1 mb-2">Open House Virtual Tour Booth</h3>
+          <p class="text-xs sm:text-sm text-stone-600 leading-relaxed">
+            Booth interaktif pada acara Open House & Orientasi Mahasiswa Baru UI, memungkinkan calon mahasiswa dan orang tua mencoba simulasi rute secara langsung.
+          </p>
+        </div>
+
+        <div class="rounded-3xl p-6 bg-[#FEF3C7]/70 border border-amber-200">
+          <div class="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-2xl mb-4">💳</div>
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-800">Tenant & QRIS Partner</span>
+          <h3 class="font-display font-black text-lg text-charcoal mt-1 mb-2">Pin Sponsor Kantin & E-Wallet</h3>
+          <p class="text-xs sm:text-sm text-stone-600 leading-relaxed">
+            Eksposur pin khusus untuk tenant Kantin Vokasi (Kanvok) lengkap dengan rekomendasi menu serta dukungan kolaborasi pembayaran cashless QRIS.
+          </p>
+        </div>
+      </div>
+
+      <!-- Official Merchandise Showcase -->
+      <div class="bg-cream rounded-3xl p-6 sm:p-8 border border-stone-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+          <div>
+            <h3 class="font-display font-black text-xl sm:text-2xl text-charcoal">🎁 WAY360 Official Merchandise</h3>
+            <p class="text-xs sm:text-sm text-stone-600">Koleksi aksesori bertema landmark Vokasi UI dengan QR Code akses cepat ke tur 360°.</p>
+          </div>
+          <span class="self-start sm:self-auto text-xs font-bold px-3 py-1.5 rounded-full bg-pinred-light text-pinred">Edisi Pilot Project 2025/2026</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <!-- Merch 1: Landmark Sticker Pack -->
+          <div class="bg-white rounded-2xl p-5 border border-stone-200/90 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="h-40 rounded-xl bg-[#DCFCE7]/50 flex items-center justify-center mb-4 p-4">
+                <svg viewBox="0 0 180 120" class="w-full h-full">
+                  <rect x="15" y="18" width="65" height="45" rx="12" fill="#FFFFFF" stroke="#5E9E43" stroke-width="3" transform="rotate(-6 45 40)"/>
+                  <text x="46" y="45" text-anchor="middle" font-size="11" font-weight="900" fill="#5E9E43" transform="rotate(-6 45 40)">KANVOK</text>
+                  <circle cx="122" cy="52" r="34" fill="#FFFFFF" stroke="#E03A3E" stroke-width="3"/>
+                  <text x="122" y="50" text-anchor="middle" font-size="10" font-weight="900" fill="#E03A3E">WAY360</text>
+                  <text x="122" y="63" text-anchor="middle" font-size="8" font-weight="700" fill="#1F2937">VOKASI UI</text>
+                  <rect x="48" y="68" width="76" height="34" rx="10" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2.5"/>
+                  <text x="86" y="89" text-anchor="middle" font-size="9.5" font-weight="800" fill="#92400E">HALTE BIKUN 🚌</text>
+                </svg>
+              </div>
+              <h4 class="font-display font-extrabold text-base text-charcoal">Vokasi Landmark Sticker Pack</h4>
+              <p class="text-xs text-stone-500 mt-1">Set 6 stiker vinyl tahan air ilustrasi Gedung VA, Kanvok, Halte Bikun, dan pin ikonik WAY360.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+              <span class="font-display font-black text-base text-leaf-dark">Rp 15.000</span>
+              <button type="button" data-merch="Vokasi Landmark Sticker Pack" data-price="Rp 15.000" class="merch-btn text-xs font-bold bg-charcoal hover:bg-leaf text-white px-3.5 py-2 rounded-xl transition-colors">
+                Lihat Detail
+              </button>
+            </div>
+          </div>
+
+          <!-- Merch 2: Explorer Card -->
+          <div class="bg-white rounded-2xl p-5 border border-stone-200/90 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="h-40 rounded-xl bg-[#E0F2FE]/60 flex items-center justify-center mb-4 p-4">
+                <svg viewBox="0 0 180 120" class="w-full h-full">
+                  <rect x="30" y="12" width="120" height="96" rx="14" fill="#FAF7F2" stroke="#1F2937" stroke-width="2.5"/>
+                  <rect x="30" y="12" width="120" height="26" rx="12" fill="#5E9E43"/>
+                  <text x="90" y="29" text-anchor="middle" font-size="10" font-weight="900" fill="#FFFFFF">EXPLORER PASS</text>
+                  <rect x="44" y="48" width="42" height="42" rx="6" fill="#1F2937"/>
+                  <rect x="50" y="54" width="12" height="12" fill="#FFFFFF"/>
+                  <rect x="68" y="54" width="12" height="12" fill="#FFFFFF"/>
+                  <rect x="50" y="72" width="12" height="12" fill="#FFFFFF"/>
+                  <text x="115" y="64" text-anchor="middle" font-size="9" font-weight="800" fill="#E03A3E">SCAN 360°</text>
+                  <text x="115" y="78" text-anchor="middle" font-size="8" font-weight="700" fill="#475569">Peta Saku UI</text>
+                </svg>
+              </div>
+              <h4 class="font-display font-extrabold text-base text-charcoal">WAY360 Campus Explorer Card</h4>
+              <p class="text-xs text-stone-500 mt-1">Kartu panduan saku seukuran e-money dengan kode QR langsung menuju tur 360° dan rute darurat.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+              <span class="font-display font-black text-base text-leaf-dark">Rp 12.000</span>
+              <button type="button" data-merch="WAY360 Campus Explorer Card" data-price="Rp 12.000" class="merch-btn text-xs font-bold bg-charcoal hover:bg-leaf text-white px-3.5 py-2 rounded-xl transition-colors">
+                Lihat Detail
+              </button>
+            </div>
+          </div>
+
+          <!-- Merch 3: Exclusive Lanyard -->
+          <div class="bg-white rounded-2xl p-5 border border-stone-200/90 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="h-40 rounded-xl bg-[#FEE2E2]/50 flex items-center justify-center mb-4 p-4">
+                <svg viewBox="0 0 180 120" class="w-full h-full">
+                  <path d="M 55 10 L 90 78 L 125 10" fill="none" stroke="#E03A3E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M 55 10 L 90 78 L 125 10" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="6 6"/>
+                  <circle cx="90" cy="82" r="8" fill="#64748B"/>
+                  <rect x="70" y="90" width="40" height="22" rx="6" fill="#5E9E43"/>
+                  <text x="90" y="104" text-anchor="middle" font-size="8" font-weight="900" fill="#FFFFFF">WAY360</text>
+                </svg>
+              </div>
+              <h4 class="font-display font-extrabold text-base text-charcoal">WAY360 Exclusive Lanyard</h4>
+              <p class="text-xs text-stone-500 mt-1">Lanyard tisu lembut dua sisi dengan motif peta kontur Vokasi UI dan tagline <em>"See the Way Before You Go"</em>.</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+              <span class="font-display font-black text-base text-leaf-dark">Rp 25.000</span>
+              <button type="button" data-merch="WAY360 Exclusive Lanyard" data-price="Rp 25.000" class="merch-btn text-xs font-bold bg-charcoal hover:bg-leaf text-white px-3.5 py-2 rounded-xl transition-colors">
+                Lihat Detail
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       8. FOOTER
+       ===================================================================== -->
+  <footer class="bg-charcoal text-stone-300 pt-12 pb-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-stone-700/80">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-full bg-cream p-1 flex-shrink-0">
+            <svg viewBox="0 0 120 120" class="w-full h-full">
+              <circle cx="60" cy="60" r="54" fill="#76AC52"/>
+              <path d="M60 22 C48 22 40 30 40 41 C40 55 60 72 60 72 C60 72 80 55 80 41 C80 30 72 22 60 22 Z" fill="#E03A3E"/>
+              <circle cx="60" cy="41" r="7" fill="#76AC52"/>
+              <text x="60" y="96" text-anchor="middle" fill="#FFFFFF" font-family="Nunito, sans-serif" font-weight="900" font-size="24">360</text>
+            </svg>
+          </div>
+          <div>
+            <p class="font-display font-black text-xl text-white">WAY<span class="text-pinred">360</span></p>
+            <p class="text-xs text-stone-400 italic">“See the Way Before You Go” — Digital Campus Navigation</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4 text-xs font-semibold">
+          <a href="#eksplorasi-360" class="hover:text-white transition-colors">Eksplorasi 360°</a>
+          <a href="#peta-direktori" class="hover:text-white transition-colors">Peta & Direktori</a>
+          <a href="#panduan-rute" class="hover:text-white transition-colors">Panduan Rute</a>
+          <a href="#komunitas-tips" class="hover:text-white transition-colors">Komunitas & Tips</a>
+          <a href="#ekosistem-merch" class="hover:text-white transition-colors">Kolaborasi & Merch</a>
+        </div>
+      </div>
+
+      <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-stone-400">
+        <div>
+          <p class="font-bold text-stone-200">
+            WAY360 — Kelompok 2 | Kuliah Umum Humas Industri Kreatif (Humas B)
+          </p>
+          <p class="mt-0.5">Program Pendidikan Vokasi Universitas Indonesia • Depok, Jawa Barat</p>
+        </div>
+        <p class="bg-stone-800/90 text-stone-300 px-3.5 py-2 rounded-xl border border-stone-700">
+          Prototype Web Interaktif • Pengembangan Akademik IP WAY360
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       MODALS & TOAST NOTIFICATION (NO ALERT/CONFIRM USED)
+       ===================================================================== -->
+  <!-- YouTube 360° Ecosystem Preview Modal -->
+  <div id="youtubeModal" class="hidden fixed inset-0 z-50 bg-charcoal/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative">
+      <button id="closeYoutubeModalBtn" type="button" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-charcoal font-bold">✕</button>
+      <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-pinred bg-pinred-light px-3 py-1 rounded-full mb-3">
+        ▶ Ekosistem Multiplatform WAY360
+      </span>
+      <h3 class="font-display font-black text-xl text-charcoal mb-2">
+        Video Tur Virtual 360° Penuh di YouTube
+      </h3>
+      <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mb-4">
+        Dalam ekosistem IP <strong>WAY360</strong>, <strong>YouTube</strong> berperan sebagai ruang eksplorasi video 360° berdurasi penuh (<em>walkthrough</em> menyeluruh dari gerbang hingga ruang kelas), sedangkan <strong>Website WAY360</strong> ini berfungsi sebagai pusat navigasi interaktif, direktori gedung, dan panduan rute cepat.
+      </p>
+      <!-- Simulated YouTube 360 Video Frame -->
+      <div class="rounded-2xl bg-stone-900 text-white p-5 mb-4 border border-stone-700 relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs text-stone-400 mb-3">
+          <span>Channel: <strong class="text-white">@WAY360VokasiUI</strong></span>
+          <span class="px-2 py-0.5 rounded bg-pinred text-white font-bold">4K 360° VR</span>
+        </div>
+        <div class="py-6 text-center">
+          <div class="w-14 h-14 rounded-full bg-pinred mx-auto flex items-center justify-center shadow-pin mb-3">
+            <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <p class="font-display font-bold text-base">Full Campus Walkthrough: Halte Bikun ke Gedung VA & Kanvok</p>
+          <p class="text-xs text-stone-400 mt-1">Simulasi Tautan Video 360° YouTube (Siap dihubungkan dengan tautan produksi tim)</p>
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <button id="doneYoutubeModalBtn" type="button" class="bg-leaf hover:bg-leaf-dark text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-colors">
+          Kembali ke Eksplorasi Web 360°
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Merchandise Detail Modal -->
+  <div id="merchModal" class="hidden fixed inset-0 z-50 bg-charcoal/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-stone-200 relative">
+      <button id="closeMerchModalBtn" type="button" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-charcoal font-bold">✕</button>
+      <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-leaf-dark bg-leaf-light px-3 py-1 rounded-full mb-2">
+        Official Merch WAY360
+      </span>
+      <h3 id="merchModalTitle" class="font-display font-black text-xl text-charcoal mb-1">Nama Produk</h3>
+      <p id="merchModalPrice" class="font-display font-extrabold text-lg text-pinred mb-3">Rp 0</p>
+      <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mb-4">
+        Merchandise resmi ini merupakan bagian dari aktivasi <em>commercial path</em> WAY360 saat Open House Vokasi UI dan booth pameran kampus. Setiap pembelian mendukung pengembangan direktori digital mahasiswa.
+      </p>
+      <div class="bg-cream rounded-2xl p-3.5 border border-stone-200 text-xs text-stone-700 mb-4">
+        📍 <strong>Lokasi Booth Pengambilan:</strong> Lobby Gedung Administrasi Vokasi UI (Saat Open House & Event Kampus).
+      </div>
+      <button id="reserveMerchBtn" type="button" class="w-full bg-pinred hover:bg-pinred-dark text-white font-bold text-sm py-3 rounded-xl shadow-pin transition-colors">
+        Catat Minat Pre-Order (Simulasi)
+      </button>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notification -->
+  <div id="toastBanner" class="hidden fixed bottom-5 right-5 z-50 max-w-sm bg-charcoal text-white px-4 py-3.5 rounded-2xl shadow-2xl border border-stone-700 flex items-center gap-3 transition-all">
+    <span class="w-2.5 h-2.5 rounded-full bg-leaf flex-shrink-0"></span>
+    <p id="toastMessage" class="text-xs sm:text-sm font-semibold leading-snug">Notifikasi</p>
+  </div>
+
+  <!-- =====================================================================
+       JAVASCRIPT APPLICATION LOGIC
+       ===================================================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      /* -------------------------------------------------------------------
+         1. DATA MODEL: 360° SCENES, CAMPUS LOCATIONS, ROUTES & TIPS
+         ------------------------------------------------------------------- */
+      const PANO_SCENES = [
+        {
+          id: 'bundaran-utama',
+          shortName: '1. Gerbang & Bundaran Utama',
+          title: 'Gerbang Masuk Jl. Tegangan Tinggi & Bundaran Utama Vokasi UI',
+          badge: 'Titik Kedatangan Utama',
+          skyColor: '#DCEFFD',
+          groundColor: '#D6CEBF',
+          accentColor: '#5E9E43',
+          buildingLabel: 'BUNDARAN UTAMA & PARKIR UTAMA VOKASI UI',
+          landmarks: [
+            { x: 260, label: 'Akses Jl. Tegangan Tinggi', color: '#E03A3E' },
+            { x: 780, label: 'Bundaran Utama Vokasi', color: '#5E9E43' },
+            { x: 1380, label: 'Area Parkir Utama (P)', color: '#0284C7' },
+            { x: 1960, label: 'Arah Training Center', color: '#F59E0B' }
+          ],
+          hotspots: [
+            {
+              x: 780,
+              y: 52,
+              type: 'info',
+              tag: 'Patokan Sentral',
+              title: 'Bundaran Utama Vokasi UI',
+              desc: 'Titik orientasi utama setelah masuk dari Jl. Tegangan Tinggi. Di sisi barat laut terdapat Area Parkir Utama (P), dan di sisi tenggara berdiri Lembaga Vokasi UI (Training Center).',
+              linkLocationId: 'bundaran-utama'
+            },
+            {
+              x: 1360,
+              y: 58,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Menuju Lembaga Vokasi UI (Training Center) →',
+              desc: 'Berjalan ke sisi tenggara bundaran menuju Gedung Lembaga Vokasi UI.',
+              targetSceneId: 'lembaga-vokasi'
+            },
+            {
+              x: 2020,
+              y: 62,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Menuju Gedung VB & Kantin Vokasi →',
+              desc: 'Ikuti jalan melengkung ke arah timur laut menuju Gedung Vokasi B (VB) dan Kantin Vokasi UI.',
+              targetSceneId: 'gedung-vb-kantin'
+            }
+          ]
+        },
+        {
+          id: 'lembaga-vokasi',
+          shortName: '2. Lembaga Vokasi (Training Center)',
+          title: 'Lembaga Vokasi UI (Training Center) — Tepat di Tenggara Bundaran',
+          badge: 'Pusat Pelatihan & Layanan',
+          skyColor: '#E8F4EA',
+          groundColor: '#E2DDD5',
+          accentColor: '#4A8033',
+          buildingLabel: 'LEMBAGA VOKASI UI • TRAINING CENTER',
+          landmarks: [
+            { x: 320, label: 'Fasad Tenggara Bundaran', color: '#5E9E43' },
+            { x: 890, label: 'Lobby Training Center', color: '#E03A3E' },
+            { x: 1520, label: 'Akses ke Gedung VA (Tengah)', color: '#F59E0B' },
+            { x: 2080, label: 'Jalur ke Gedung VB & Kantin', color: '#0284C7' }
+          ],
+          hotspots: [
+            {
+              x: 890,
+              y: 50,
+              type: 'info',
+              tag: 'Gedung Utama',
+              title: 'Lembaga Vokasi UI (Training Center)',
+              desc: 'Gedung berposisi diagonal tepat di sisi tenggara Bundaran Utama. Menjadi penghubung strategis antara area parkir utama, Gedung VB & Kantin di utara, serta Gedung VA di tengah.',
+              linkLocationId: 'lembaga-vokasi'
+            },
+            {
+              x: 1540,
+              y: 60,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Lanjut ke Gedung Vokasi A (VA • Tengah) →',
+              desc: 'Menuju dua sayap paralel Gedung Vokasi A (pusat administrasi & lab) di selatan bundaran.',
+              targetSceneId: 'gedung-va'
+            },
+            {
+              x: 2080,
+              y: 58,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Menuju Gedung VB & Kantin Vokasi →',
+              desc: 'Ikuti jalan timur dari bundaran menuju Gedung VB Utara dan Kantin Vokasi UI.',
+              targetSceneId: 'gedung-vb-kantin'
+            }
+          ]
+        },
+        {
+          id: 'gedung-vb-kantin',
+          shortName: '3. Gedung VB & Kantin Vokasi UI',
+          title: 'Gedung Vokasi B (VB Utara) & Kantin Vokasi Universitas Indonesia',
+          badge: 'Perkuliahan & Kuliner',
+          skyColor: '#FEF6E4',
+          groundColor: '#D8CFC2',
+          accentColor: '#F59E0B',
+          buildingLabel: 'GEDUNG VOKASI B (VB) & KANTIN VOKASI UI',
+          landmarks: [
+            { x: 300, label: 'Sayap Paralel Gedung VB', color: '#5E9E43' },
+            { x: 860, label: 'Kantin Vokasi UI', color: '#E03A3E' },
+            { x: 1440, label: 'Hutan Kampus UI', color: '#2E5A27' },
+            { x: 1980, label: 'Jalan Kembali ke Bundaran', color: '#0284C7' }
+          ],
+          hotspots: [
+            {
+              x: 320,
+              y: 53,
+              type: 'info',
+              tag: 'Gedung Kuliah Utara',
+              title: 'Gedung Vokasi B (Gedung VB)',
+              desc: 'Terdiri dari dua sayap bangunan paralel barat–timur di bagian utara kampus, terhubung langsung dengan Kantin Vokasi UI di ujung timurnya.',
+              linkLocationId: 'gedung-vb'
+            },
+            {
+              x: 860,
+              y: 50,
+              type: 'info',
+              tag: 'Kuliner & QRIS Partner',
+              title: 'Kantin Vokasi Universitas Indonesia',
+              desc: 'Berada persis di ujung timur Gedung VB dan dikelilingi pepohonan rindang Hutan Kampus UI. Menyediakan beragam menu terjangkau dan pembayaran QRIS.',
+              linkLocationId: 'kantin-vokasi'
+            },
+            {
+              x: 1980,
+              y: 60,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: '← Kembali ke Bundaran Utama',
+              desc: 'Berjalan ke arah barat mengikuti jalan melengkung menuju Bundaran Utama.',
+              targetSceneId: 'bundaran-utama'
+            }
+          ]
+        },
+        {
+          id: 'gedung-va',
+          shortName: '4. Gedung Vokasi A (VA • Tengah)',
+          title: 'Gedung Vokasi A (VA) — Pusat Administrasi & Laboratorium',
+          badge: 'Gedung Tengah & Lab Humas',
+          skyColor: '#E0F2FE',
+          groundColor: '#D6D3C9',
+          accentColor: '#5E9E43',
+          buildingLabel: 'GEDUNG VOKASI A (VA) • ADMINISTRASI & LAB',
+          landmarks: [
+            { x: 340, label: 'Parkir Motor Sisi Barat', color: '#0284C7' },
+            { x: 960, label: 'Sayap Utama Gedung VA', color: '#5E9E43' },
+            { x: 1580, label: 'Selasar ke Gedung VC & Audito', color: '#E03A3E' },
+            { x: 2100, label: 'Arah Training Center', color: '#F59E0B' }
+          ],
+          hotspots: [
+            {
+              x: 960,
+              y: 48,
+              type: 'info',
+              tag: 'Gedung Pusat VA',
+              title: 'Gedung Vokasi A (Gedung VA — Tengah)',
+              desc: 'Dua sayap bangunan paralel timur–barat di tengah kawasan Vokasi UI yang berfungsi sebagai pusat administrasi, pelayanan akademik, dan laboratorium praktik (termasuk Lab Humas & Radio).',
+              linkLocationId: 'gedung-va'
+            },
+            {
+              x: 1580,
+              y: 60,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Menuju Gedung VC & Auditorium (Selatan) →',
+              desc: 'Berjalan ke arah selatan melewati Gedung VC menuju Auditorium Vokasi UI di belakang VC.',
+              targetSceneId: 'auditorium'
+            }
+          ]
+        },
+        {
+          id: 'auditorium',
+          shortName: '5. Auditorium (Belakang VC)',
+          title: 'Gedung Auditorium Vokasi UI (Tepat di Belakang Gedung VC)',
+          badge: 'Venue Kuliah Umum & Event',
+          skyColor: '#292524',
+          groundColor: '#3F3A36',
+          accentColor: '#E03A3E',
+          buildingLabel: 'AUDITORIUM VOKASI UI • BELAKANG GEDUNG VC',
+          landmarks: [
+            { x: 340, label: 'Penghubung dari Gedung VC', color: '#5E9E43' },
+            { x: 960, label: 'Panggung Auditorium Vokasi', color: '#E03A3E' },
+            { x: 1580, label: 'Arah Gedung Bisnis (BC)', color: '#F59E0B' },
+            { x: 2100, label: 'Sisi Selatan Kampus', color: '#0284C7' }
+          ],
+          hotspots: [
+            {
+              x: 960,
+              y: 48,
+              type: 'info',
+              tag: 'Venue Event LIVE',
+              title: 'Auditorium Vokasi UI (Di Belakang Gedung VC)',
+              desc: 'Berdiri tepat di belakang (sisi selatan) Gedung Vokasi C (VC) dan terhubung langsung melalui selasar penghubung. Kapasitas ±350–500 kursi bergaya teater.',
+              linkLocationId: 'auditorium'
+            },
+            {
+              x: 1850,
+              y: 60,
+              type: 'portal',
+              tag: 'Pindah Area 360°',
+              title: 'Kembali ke Bundaran Utama →',
+              desc: 'Kembali ke area Bundaran Utama & Parkir Utama Vokasi UI.',
+              targetSceneId: 'bundaran-utama'
+            }
+          ]
+        }
+      ];
+
+      const CAMPUS_LOCATIONS = [
+        {
+          id: 'parkir-utama',
+          name: 'Area Parkir Utama (P)',
+          category: 'parkir',
+          catLabel: 'Parkir & Akses',
+          floor: 'Area Terbuka Barat Laut',
+          hours: '06.30 – 21.00 WIB',
+          accessible: true,
+          x: 194,
+          y: 122,
+          sceneId: 'bundaran-utama',
+          landmark: 'Tepat di sebelah kanan setelah masuk gerbang dari Jl. Tegangan Tinggi, bersebelahan dengan Bundaran Utama.',
+          desc: 'Kantong parkir utama kendaraan roda empat dan pengunjung tamu Vokasi UI dengan akses datar langsung ke bundaran.'
+        },
+        {
+          id: 'bundaran-utama',
+          name: 'Bundaran Utama Vokasi UI',
+          category: 'parkir',
+          catLabel: 'Parkir & Akses',
+          floor: 'Titik Sentral Utara',
+          hours: '24 Jam (Akses Kampus)',
+          accessible: true,
+          x: 302,
+          y: 138,
+          sceneId: 'bundaran-utama',
+          landmark: 'Pulau bundaran hijau di ujung jalan masuk utama dari Jl. Tegangan Tinggi.',
+          desc: 'Simpul orientasi utama Vokasi UI yang membagi jalur menuju Gedung VA & Kantin (timur), Training Center (tenggara), dan Gedung VB (selatan).'
+        },
+        {
+          id: 'lembaga-vokasi',
+          name: 'Lembaga Vokasi UI (Training Center)',
+          category: 'gedung',
+          catLabel: 'Gedung Kuliah & Pusat',
+          floor: 'Lantai 1–3',
+          hours: '07.30 – 16.30 WIB',
+          accessible: true,
+          x: 366,
+          y: 188,
+          sceneId: 'lembaga-vokasi',
+          landmark: 'Berdiri menyerong tepat di tepi tenggara Bundaran Utama Vokasi UI.',
+          desc: 'Pusat pelatihan vokasional, ruang layanan administrasi kelembagaan, dan penghubung koridor antara area utara dan tengah.'
+        },
+        {
+          id: 'gedung-vb',
+          name: 'Gedung Vokasi B (Gedung VB • Utara)',
+          category: 'gedung',
+          catLabel: 'Gedung Kuliah',
+          floor: 'Lantai 1–6 (2 Sayap Utara)',
+          hours: '07.00 – 20.00 WIB',
+          accessible: true,
+          x: 466,
+          y: 124,
+          sceneId: 'gedung-vb-kantin',
+          landmark: 'Dua sayap bangunan paralel timur–barat di utara kampus, terhubung langsung ke Kantin Vokasi UI di ujung timurnya.',
+          desc: 'Gedung perkuliahan utama bagian utara yang langsung tersambung dengan Kantin Vokasi UI dan jalur menuju Hutan Kampus.'
+        },
+        {
+          id: 'kantin-vokasi',
+          name: 'Kantin Vokasi Universitas Indonesia',
+          category: 'kantin',
+          catLabel: 'Kantin & Fasilitas',
+          floor: 'Area Timur Gedung VB',
+          hours: '07.00 – 17.00 WIB',
+          accessible: true,
+          x: 578,
+          y: 126,
+          sceneId: 'gedung-vb-kantin',
+          landmark: 'Persis di ujung timur Gedung Vokasi B (VB), berbatasan langsung dengan rimbunnya Hutan Kampus UI.',
+          desc: 'Pusat kuliner mahasiswa Vokasi UI dengan beragam tenant makanan, minuman segar, serta dukungan transaksi cashless QRIS.'
+        },
+        {
+          id: 'gedung-va',
+          name: 'Gedung Vokasi A (Gedung VA • Tengah)',
+          category: 'gedung',
+          catLabel: 'Gedung Kuliah & Pusat',
+          floor: 'Lantai 1–6 (2 Sayap Tengah)',
+          hours: '07.00 – 20.00 WIB',
+          accessible: true,
+          x: 294,
+          y: 262,
+          sceneId: 'gedung-va',
+          landmark: 'Dua sayap paralel di tengah kampus (selatan bundaran), bersebelahan dengan deretan parkir motor sisi barat.',
+          desc: 'Gedung pusat administrasi, pelayanan akademik mahasiswa, dan laboratorium praktik Program Pendidikan Vokasi UI (termasuk Lab Humas & Radio).'
+        },
+        {
+          id: 'parkir-samping',
+          name: 'Parkir Motor & Selasar Barat VA',
+          category: 'parkir',
+          catLabel: 'Parkir & Akses',
+          floor: 'Sisi Barat Gedung VA',
+          hours: '06.30 – 21.00 WIB',
+          accessible: true,
+          x: 171,
+          y: 268,
+          sceneId: 'gedung-va',
+          landmark: 'Area parkir memanjang di antara Jl. Tegangan Tinggi dan sayap barat Gedung Vokasi A (VA).',
+          desc: 'Area parkir kendaraan roda dua mahasiswa dengan akses selasar teduh langsung menuju Gedung VA dan Gedung Bisnis Center (BC).'
+        },
+        {
+          id: 'gedung-bc',
+          name: 'Gedung Bisnis Center (BC)',
+          category: 'kantin',
+          catLabel: 'Kantin & Fasilitas',
+          floor: 'Lantai 1–2 (Sayap Barat Daya)',
+          hours: '07.30 – 18.00 WIB',
+          accessible: true,
+          x: 140,
+          y: 365,
+          sceneId: 'auditorium',
+          landmark: 'Bangunan beratap abu-abu di sisi barat dekat Jl. Tegangan Tinggi, sebelah barat Gedung VC.',
+          desc: 'Gedung Pusat Bisnis Vokasi UI (Lantai 1 untuk kegiatan TEFA & ViCoop, Lantai 2 untuk ruang kegiatan kemahasiswaan).'
+        },
+        {
+          id: 'lapangan-futsal',
+          name: 'Lapangan Futsal & Hall Olahraga',
+          category: 'kantin',
+          catLabel: 'Kantin & Fasilitas',
+          floor: 'Sudut Barat Daya',
+          hours: '07.00 – 20.00 WIB',
+          accessible: true,
+          x: 124,
+          y: 452,
+          sceneId: 'auditorium',
+          landmark: 'Area olahraga beratap terang di sudut paling barat daya dekat Jl. Tegangan Tinggi, tepat di selatan Gedung Bisnis Center (BC).',
+          desc: 'Fasilitas lapangan futsal dan olahraga mahasiswa Vokasi UI.'
+        },
+        {
+          id: 'gedung-vc',
+          name: 'Gedung Vokasi C (Gedung VC • Selatan)',
+          category: 'gedung',
+          catLabel: 'Gedung Kuliah',
+          floor: 'Lantai 1–6 (2 Sayap Selatan)',
+          hours: '07.00 – 20.00 WIB',
+          accessible: true,
+          x: 258,
+          y: 372,
+          sceneId: 'auditorium',
+          landmark: 'Dua sayap paralel di bagian selatan kampus (selatan Gedung VA), terhubung langsung ke Auditorium Vokasi UI di belakangnya.',
+          desc: 'Kompleks gedung perkuliahan selatan, ruang uji kompetensi, dan laboratorium dengan kantong parkir di sisi timurnya.'
+        },
+        {
+          id: 'auditorium',
+          name: 'Auditorium Vokasi UI (Belakang VC)',
+          category: 'event',
+          catLabel: 'Event LIVE & Auditorium',
+          floor: 'Tepat di Belakang Gedung VC',
+          hours: 'Event Hari Ini • 09.00 – 15.00 WIB',
+          accessible: true,
+          isLiveEvent: true,
+          x: 245,
+          y: 442,
+          sceneId: 'auditorium',
+          landmark: 'Berdiri persis di belakang (sisi paling selatan) Gedung Vokasi C (VC) dan terhubung langsung melalui koridor penghubung.',
+          desc: 'Auditorium utama Vokasi UI bergaya teater untuk Kuliah Umum Humas Industri Kreatif, Open House, dan seminar nasional. Saat ini berlangsung Booth Virtual Tour WAY360!'
+        }
+      ];
+
+      // Exact coordinate nodes on the 800x560 Vokasi UI SVG map for live path drawing
+      const MAP_GRAPH_NODES = {
+        'jl-tegangan-tinggi': { x: 90, y: 108 },
+        'parkir-utama': { x: 194, y: 122 },
+        'bundaran-utama': { x: 302, y: 138 },
+        'lembaga-vokasi': { x: 366, y: 188 },
+        'gedung-vb': { x: 466, y: 122 },
+        'kantin-vokasi': { x: 578, y: 126 },
+        'parkir-samping': { x: 171, y: 268 },
+        'gedung-va': { x: 294, y: 262 },
+        'gedung-bc': { x: 140, y: 365 },
+        'lapangan-futsal': { x: 124, y: 452 },
+        'gedung-vc': { x: 258, y: 372 },
+        'auditorium': { x: 245, y: 442 }
+      };
+
+      const VOKASI_TIPS = [
+        {
+          id: 'tip-1',
+          category: 'kantin',
+          catLabel: '🍜 Kantin & Kuliner',
+          author: 'Aisyah • Mahasiswa Humas',
+          handle: '@way360.ui • Reels Guide',
+          title: 'Patokan Paling Gampang ke Kantin Vokasi dari Bundaran',
+          content: 'Dari Bundaran Utama, ambil jalan melengkung ke timur melewati dua sayap Gedung VB Utara. Kantin Vokasi UI nyambung persis di ujung timurnya di tepi hutan UI!',
+          views: '14,2 rb tayangan'
+        },
+        {
+          id: 'tip-2',
+          category: 'transport',
+          catLabel: '🚌 Akses & Parkir',
+          author: 'Hafiz • Tim Navigasi WAY360',
+          handle: '@way360.ui • TikTok 30s',
+          title: 'Bedanya Parkir Utama (P) vs Parkir Motor Samping VA',
+          content: 'Masuk dari Jl. Tegangan Tinggi: belok kiri ke Parkir Utama (P) dekat bundaran untuk mobil/tamu, atau lurus ke selatan di sisi barat Gedung VA (tengah) untuk parkir motor.',
+          views: '28,9 rb tayangan'
+        },
+        {
+          id: 'tip-3',
+          category: 'nugas',
+          catLabel: '🎭 Venue & Kelas',
+          author: 'Kayla • Humas B 2025',
+          handle: '@way360.ui • Vokasi Facts',
+          title: 'Cara Cepat ke Auditorium Vokasi (Di Belakang Gedung VC)',
+          content: 'Kalau ada kuliah umum atau seminar, jalan terus ke arah selatan melewati Gedung VA (tengah) lalu masuk melewati Gedung VC—Auditorium Vokasi UI ada persis di belakang Gedung VC!',
+          views: '9,8 rb tayangan'
+        }
+      ];
+
+      const INITIAL_FEEDBACKS = [
+        {
+          name: 'Nadia Putri (Calon Maba)',
+          type: 'Evaluasi Rute',
+          rating: 5,
+          message: 'Kebantu banget pas mau ikut Open House! Udah kebayang dulu pintu masuk Auditoriumnya lewat tur 360° jadi gak nyasar.',
+          time: '2 jam lalu'
+        },
+        {
+          name: 'Dimas Pratama (Humas UI)',
+          type: 'Tips Lokasi',
+          rating: 5,
+          message: 'Buat pengunjung dari parkiran motor, bisa langsung lewat selasar samping Gedung Administrasi biar gak kehujanan.',
+          time: '1 hari lalu'
+        },
+        {
+          name: 'Ibu Ratna (Orang Tua Mahasiswa)',
+          type: 'Evaluasi Rute',
+          rating: 5,
+          message: 'Fitur jalur aksesibilitas tanpa tangganya sangat jelas informasinya untuk keluarga yang membawa lansia.',
+          time: '3 hari lalu'
+        }
+      ];
+
+      /* -------------------------------------------------------------------
+         2. STATE MANAGEMENT
+         ------------------------------------------------------------------- */
+      const state = {
+        currentSceneIndex: 0,
+        panoOffset: 240, // pixels inside 2400px panorama
+        isDragging: false,
+        dragStartX: 0,
+        dragStartOffset: 0,
+        autoRotate: false,
+        selectedLocationId: 'lembaga-vokasi',
+        activeCategory: 'all',
+        searchQuery: '',
+        mapMode: 'clean', // 'clean' | 'satellite'
+        mapZoom: 1,
+        routeMode: 'shortcut', // 'shortcut' | 'accessible'
+        activeTipCategory: 'all',
+        selectedStar: 5,
+        feedbacks: [...INITIAL_FEEDBACKS]
+      };
+
+      /* -------------------------------------------------------------------
+         3. RENDER 360° ARCHITECTURAL PANORAMAS & INTERACTIVE HOTSPOTS
+         ------------------------------------------------------------------- */
+      function buildPanoSvgMarkup(scene) {
+        // Generates a rich 2400x520 seamless SVG campus panorama with sky, trees, buildings, ground, and landmarks
+        const landmarksSvg = scene.landmarks.map(lm => `
+          <g transform="translate(${lm.x}, 290)">
+            <rect x="-2" y="0" width="4" height="85" fill="#475569" />
+            <rect x="-68" y="-26" width="136" height="30" rx="10" fill="${lm.color}" />
+            <text x="0" y="-7" text-anchor="middle" fill="#FFFFFF" font-family="Plus Jakarta Sans, sans-serif" font-size="11" font-weight="800">${lm.label}</text>
+          </g>
+        `).join('');
+
+        return `
+          <svg viewBox="0 0 2400 520" preserveAspectRatio="none" class="w-full h-full block pointer-events-none">
+            <!-- Sky & Horizon Gradient -->
+            <rect width="2400" height="340" fill="${scene.skyColor}" />
+            <!-- Soft Clouds -->
+            <g fill="#FFFFFF" opacity="0.65">
+              <ellipse cx="220" cy="85" rx="75" ry="22" />
+              <ellipse cx="780" cy="65" rx="95" ry="25" />
+              <ellipse cx="1420" cy="90" rx="80" ry="20" />
+              <ellipse cx="1980" cy="70" rx="90" ry="24" />
+            </g>
+
+            <!-- Campus Greenery & Trees Backdrop -->
+            <g fill="#74B058" opacity="0.45">
+              <circle cx="120" cy="270" r="85" />
+              <circle cx="480" cy="265" r="95" />
+              <circle cx="1120" cy="260" r="105" />
+              <circle cx="1720" cy="265" r="90" />
+              <circle cx="2280" cy="270" r="85" />
+            </g>
+
+            <!-- Left Wing Architectural Structure -->
+            <g transform="translate(180, 145)">
+              <rect width="460" height="195" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
+              <rect x="0" y="0" width="460" height="26" rx="8" fill="${scene.accentColor}" />
+              <!-- Windows Grid -->
+              <rect x="28" y="45" width="75" height="55" rx="6" fill="#E0F2FE" stroke="#94A3B8" stroke-width="2" />
+              <rect x="125" y="45" width="75" height="55" rx="6" fill="#E0F2FE" stroke="#94A3B8" stroke-width="2" />
+              <rect x="222" y="45" width="75" height="55" rx="6" fill="#E0F2FE" stroke="#94A3B8" stroke-width="2" />
+              <rect x="319" y="45" width="110" height="135" rx="8" fill="#F1F5F9" stroke="#94A3B8" stroke-width="2" />
+            </g>
+
+            <!-- Center Main Campus Facade -->
+            <g transform="translate(720, 125)">
+              <rect width="740" height="215" rx="16" fill="#FFFFFF" stroke="#94A3B8" stroke-width="3" />
+              <rect x="0" y="0" width="740" height="36" rx="12" fill="${scene.accentColor}" />
+              <text x="370" y="23" text-anchor="middle" fill="#FFFFFF" font-family="Nunito, sans-serif" font-size="14" font-weight="900" letter-spacing="1">
+                ${scene.buildingLabel}
+              </text>
+              <!-- Pillars & Glass Entrance -->
+              <rect x="45" y="55" width="140" height="145" rx="8" fill="#E0F2FE" stroke="#94A3B8" stroke-width="2" />
+              <rect x="235" y="65" width="270" height="135" rx="10" fill="#F8FAFC" stroke="#5E9E43" stroke-width="3" />
+              <text x="370" y="128" text-anchor="middle" fill="#1F2937" font-family="Nunito, sans-serif" font-size="16" font-weight="900">WAY360 • VOKASI UI</text>
+              <rect x="555" y="55" width="140" height="145" rx="8" fill="#E0F2FE" stroke="#94A3B8" stroke-width="2" />
+            </g>
+
+            <!-- Right Wing Corridor / Canopy -->
+            <g transform="translate(1560, 165)">
+              <rect width="580" height="175" rx="14" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="3" />
+              <rect x="0" y="0" width="580" height="22" rx="8" fill="#E03A3E" opacity="0.85" />
+              <rect x="35" y="42" width="110" height="115" rx="8" fill="#DCFCE7" stroke="#5E9E43" stroke-width="2" />
+              <rect x="175" y="42" width="110" height="115" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2" />
+              <rect x="315" y="42" width="110" height="115" rx="8" fill="#E0F2FE" stroke="#0284C7" stroke-width="2" />
+              <rect x="455" y="42" width="90" height="115" rx="8" fill="#F1F5F9" stroke="#94A3B8" stroke-width="2" />
+            </g>
+
+            <!-- Ground / Pedestrian Plaza Floor -->
+            <rect y="340" width="2400" height="180" fill="${scene.groundColor}" />
+            <!-- Perspective Paving Lines & Accessible Yellow Guiding Strip -->
+            <line x1="0" y1="385" x2="2400" y2="385" stroke="#FFFFFF" stroke-width="3" opacity="0.6" />
+            <line x1="0" y1="435" x2="2400" y2="435" stroke="#FACC15" stroke-width="8" stroke-dasharray="18 8" opacity="0.85" />
+            <line x1="0" y1="485" x2="2400" y2="485" stroke="#94A3B8" stroke-width="2" opacity="0.4" />
+
+            <!-- Landmark Signs -->
+            ${landmarksSvg}
+          </svg>
+        `;
+      }
+
+      function buildHotspotsHtml(scene) {
+        return scene.hotspots.map((hs, idx) => {
+          const isPortal = hs.type === 'portal';
+          const bgClass = isPortal ? 'bg-leaf hover:bg-leaf-dark hotspot-portal' : 'bg-pinred hover:bg-pinred-dark';
+          const icon = isPortal ? '🧭' : '📍';
+          return `
+            <button
+              type="button"
+              data-hotspot-idx="${idx}"
+              style="left: ${hs.x}px; top: ${hs.y}%;"
+              class="pano-hotspot-btn hotspot-pulse absolute -translate-x-1/2 -translate-y-1/2 z-10 group flex items-center gap-2 ${bgClass} text-white px-3.5 py-2 rounded-full shadow-xl border-2 border-white transition-transform hover:scale-105 focus:outline-none"
+            >
+              <span class="relative z-10 text-sm">${icon}</span>
+              <span class="relative z-10 text-xs font-extrabold whitespace-nowrap">${hs.title}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      function renderSceneTabs() {
+        const container = document.getElementById('sceneTabs');
+        container.innerHTML = PANO_SCENES.map((sc, idx) => {
+          const isActive = idx === state.currentSceneIndex;
+          return `
+            <button
+              type="button"
+              data-scene-idx="${idx}"
+              class="scene-tab-btn flex-shrink-0 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-extrabold transition-all border ${
+                isActive
+                  ? 'bg-leaf text-white border-leaf shadow-md'
+                  : 'bg-cream hover:bg-stone-200/80 text-stone-700 border-stone-200'
+              }"
+            >
+              ${sc.shortName}
+            </button>
+          `;
+        }).join('');
+
+        container.querySelectorAll('.scene-tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            switchPanoScene(Number(btn.dataset.sceneIdx));
+          });
+        });
+      }
+
+      function switchPanoScene(index) {
+        state.currentSceneIndex = index;
+        const scene = PANO_SCENES[index];
+
+        document.getElementById('panoSceneBadge').textContent = `Area ${index + 1} dari ${PANO_SCENES.length} • ${scene.badge}`;
+        document.getElementById('panoSceneTitle').textContent = scene.title;
+        document.getElementById('hotspotInfoCard').classList.add('hidden');
+
+        const track = document.getElementById('panoTrack');
+        const segmentHtml = buildPanoSvgMarkup(scene) + buildHotspotsHtml(scene);
+
+        // Render two identical segments side by side for seamless 360° wrap-around
+        track.innerHTML = `
+          <div class="pano-segment">${segmentHtml}</div>
+          <div class="pano-segment">${segmentHtml}</div>
+        `;
+
+        // Bind hotspot clicks on both segments
+        track.querySelectorAll('.pano-hotspot-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const hsIdx = Number(btn.dataset.hotspotIdx);
+            handleHotspotClick(scene.hotspots[hsIdx]);
+          });
+        });
+
+        renderSceneTabs();
+        updatePanoTransform();
+      }
+
+      function handleHotspotClick(hs) {
+        if (hs.type === 'portal' && hs.targetSceneId) {
+          const nextIdx = PANO_SCENES.findIndex(s => s.id === hs.targetSceneId);
+          if (nextIdx !== -1) {
+            switchPanoScene(nextIdx);
+            showToast(`Berpindah ke: ${PANO_SCENES[nextIdx].shortName}`);
+            return;
+          }
+        }
+
+        const card = document.getElementById('hotspotInfoCard');
+        document.getElementById('hotspotCardTag').textContent = hs.tag;
+        document.getElementById('hotspotCardTitle').textContent = hs.title;
+        document.getElementById('hotspotCardDesc').textContent = hs.desc;
+
+        const actionsEl = document.getElementById('hotspotCardActions');
+        if (hs.linkLocationId) {
+          actionsEl.innerHTML = `
+            <button type="button" id="hotspotGoRouteBtn" class="bg-pinred hover:bg-pinred-dark text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-colors">
+              🧭 Buat Rute ke Lokasi Ini
+            </button>
+            <button type="button" id="hotspotGoDirBtn" class="bg-cream hover:bg-stone-200 text-charcoal text-xs font-bold px-3.5 py-2 rounded-xl border border-stone-200 transition-colors">
+              🗺️ Lihat di Peta
+            </button>
+          `;
+          document.getElementById('hotspotGoRouteBtn').addEventListener('click', () => {
+            setDestinationAndScrollToRoute(hs.linkLocationId);
+          });
+          document.getElementById('hotspotGoDirBtn').addEventListener('click', () => {
+            selectLocation(hs.linkLocationId);
+            document.getElementById('peta-direktori').scrollIntoView({ behavior: 'smooth' });
+          });
+        } else {
+          actionsEl.innerHTML = '';
+        }
+
+        card.classList.remove('hidden');
+      }
+
+      function updatePanoTransform() {
+        const segmentWidth = 2400;
+        // Wrap offset cleanly within [0, 2400)
+        state.panoOffset = ((state.panoOffset % segmentWidth) + segmentWidth) % segmentWidth;
+        const track = document.getElementById('panoTrack');
+        track.style.transform = `translate3d(-${state.panoOffset}px, 0, 0)`;
+
+        // Update compass heading (0° - 360°)
+        const degrees = Math.round((state.panoOffset / segmentWidth) * 360) % 360;
+        const dirs = ['U', 'TL', 'T', 'TG', 'S', 'BD', 'B', 'BL'];
+        const cardinal = dirs[Math.round(degrees / 45) % 8];
+        document.getElementById('compassHeading').textContent = `${degrees}° ${cardinal}`;
+        document.getElementById('compassNeedle').style.transform = `rotate(${degrees}deg)`;
+      }
+
+      function initPanoControls() {
+        const viewport = document.getElementById('panoViewport');
+
+        // Mouse drag
+        viewport.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.pano-hotspot-btn')) return;
+          state.isDragging = true;
+          state.dragStartX = e.clientX;
+          state.dragStartOffset = state.panoOffset;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!state.isDragging) return;
+          const deltaX = e.clientX - state.dragStartX;
+          state.panoOffset = state.dragStartOffset - deltaX * 1.25;
+          updatePanoTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          state.isDragging = false;
+        });
+
+        // Touch swipe
+        viewport.addEventListener('touchstart', (e) => {
+          if (e.target.closest('.pano-hotspot-btn')) return;
+          state.isDragging = true;
+          state.dragStartX = e.touches[0].clientX;
+          state.dragStartOffset = state.panoOffset;
+        }, { passive: true });
+
+        viewport.addEventListener('touchmove', (e) => {
+          if (!state.isDragging) return;
+          const deltaX = e.touches[0].clientX - state.dragStartX;
+          state.panoOffset = state.dragStartOffset - deltaX * 1.35;
+          updatePanoTransform();
+        }, { passive: true });
+
+        viewport.addEventListener('touchend', () => {
+          state.isDragging = false;
+        });
+
+        // Arrow buttons
+        document.getElementById('panLeftBtn').addEventListener('click', () => {
+          state.panoOffset -= 180;
+          updatePanoTransform();
+        });
+        document.getElementById('panRightBtn').addEventListener('click', () => {
+          state.panoOffset += 180;
+          updatePanoTransform();
+        });
+
+        // Keyboard left/right arrow support when focused/hovered
+        window.addEventListener('keydown', (e) => {
+          if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+          if (e.key === 'ArrowLeft') {
+            state.panoOffset -= 120;
+            updatePanoTransform();
+          } else if (e.key === 'ArrowRight') {
+            state.panoOffset += 120;
+            updatePanoTransform();
+          }
+        });
+
+        // Auto-rotate toggle
+        document.getElementById('toggleAutoRotateBtn').addEventListener('click', () => {
+          state.autoRotate = !state.autoRotate;
+          const btn = document.getElementById('toggleAutoRotateBtn');
+          const label = document.getElementById('autoRotateLabel');
+          if (state.autoRotate) {
+            label.textContent = 'Auto-Putar: ON';
+            btn.classList.add('bg-leaf', 'text-white');
+            btn.classList.remove('bg-white/95', 'text-charcoal');
+          } else {
+            label.textContent = 'Auto-Putar: OFF';
+            btn.classList.remove('bg-leaf', 'text-white');
+            btn.classList.add('bg-white/95', 'text-charcoal');
+          }
+        });
+
+        // Close hotspot popover
+        document.getElementById('closeHotspotCardBtn').addEventListener('click', () => {
+          document.getElementById('hotspotInfoCard').classList.add('hidden');
+        });
+
+        // Animation loop for smooth auto-rotate
+        function animateLoop() {
+          if (state.autoRotate && !state.isDragging) {
+            state.panoOffset += 0.9;
+            updatePanoTransform();
+          }
+          requestAnimationFrame(animateLoop);
+        }
+        requestAnimationFrame(animateLoop);
+      }
+
+      /* -------------------------------------------------------------------
+         4. INTERACTIVE CAMPUS MAP, SATELLITE MODE & SEARCHABLE DIRECTORY
+         ------------------------------------------------------------------- */
+      function getPinColor(cat) {
+        if (cat === 'kantin') return '#F59E0B';
+        if (cat === 'parkir') return '#0284C7';
+        if (cat === 'event') return '#E03A3E';
+        return '#5E9E43';
+      }
+
+      function applyMapVisualMode() {
+        const isSat = state.mapMode === 'satellite';
+        const viewport = document.getElementById('campusMapViewport');
+        const baseBg = document.getElementById('mapBaseBg');
+        const forestZone = document.getElementById('mapForestZone');
+        const forestTex = document.getElementById('mapForestTexture');
+        const forestLabel = document.getElementById('mapForestLabel');
+        const fiaLabel = document.getElementById('mapFiaLabel');
+
+        if (isSat) {
+          viewport.classList.remove('bg-[#DCECD5]');
+          viewport.classList.add('bg-[#2D4728]');
+          baseBg.setAttribute('fill', '#4E5D47');
+          forestZone.setAttribute('fill', '#23421F');
+          forestTex.setAttribute('opacity', '0.75');
+          forestLabel.setAttribute('fill', '#BBF7D0');
+          fiaLabel.setAttribute('fill', '#E2E8F0');
+        } else {
+          viewport.classList.add('bg-[#DCECD5]');
+          viewport.classList.remove('bg-[#2D4728]');
+          baseBg.setAttribute('fill', '#E8F3E2');
+          forestZone.setAttribute('fill', '#CBE4BE');
+          forestTex.setAttribute('opacity', '0.18');
+          forestLabel.setAttribute('fill', '#2E5A27');
+          fiaLabel.setAttribute('fill', '#475569');
+        }
+      }
+
+      function applyMapZoom() {
+        const svg = document.getElementById('campusSvgMap');
+        svg.style.transform = `scale(${state.mapZoom})`;
+        document.getElementById('mapZoomLabel').textContent = `${Math.round(state.mapZoom * 100)}%`;
+      }
+
+      function drawRouteOnMap(originKey, destKey, isAccessible) {
+        const layer = document.getElementById('routePathLayer');
+        const startPt = MAP_GRAPH_NODES[originKey] || MAP_GRAPH_NODES['parkir-utama'];
+        const endPt = MAP_GRAPH_NODES[destKey] || MAP_GRAPH_NODES['auditorium'];
+
+        if (originKey === destKey) {
+          layer.innerHTML = '';
+          return;
+        }
+
+        // Build realistic waypoints through Bundaran Utama & Campus Spine Roads
+        const hubNorth = { x: 302, y: 138 }; // Bundaran Utama
+        const hubMid = { x: 215, y: 215 };   // Junction between Bundaran & VA/VC
+        const hubSouth = { x: 182, y: 322 }; // Junction to Gedung BC, VC & Auditorium
+
+        const points = [startPt];
+        if (originKey !== 'bundaran-utama' && originKey !== 'parkir-utama') {
+          points.push(hubMid);
+        }
+        points.push(hubNorth);
+
+        if (['gedung-va', 'parkir-samping', 'gedung-bc', 'lapangan-futsal', 'gedung-vc', 'auditorium'].includes(destKey)) {
+          points.push(hubMid);
+          if (['gedung-bc', 'lapangan-futsal', 'gedung-vc', 'auditorium'].includes(destKey)) {
+            points.push(hubSouth);
+          }
+          if (destKey === 'auditorium') {
+            points.push(MAP_GRAPH_NODES['gedung-vc']);
+          }
+        }
+        points.push(endPt);
+
+        const dAttr = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+        const strokeColor = isAccessible ? '#0284C7' : '#E03A3E';
+
+        layer.innerHTML = `
+          <path d="${dAttr}" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+          <path d="${dAttr}" fill="none" stroke="${strokeColor}" stroke-width="5" stroke-dasharray="10 8" stroke-linecap="round" stroke-linejoin="round" class="route-line-animated" />
+          <circle cx="${startPt.x}" cy="${startPt.y}" r="8" fill="#1E293B" stroke="#FFFFFF" stroke-width="2.5" />
+        `;
+      }
+
+      function renderMapPins() {
+        const layer = document.getElementById('mapPinsLayer');
+        layer.innerHTML = CAMPUS_LOCATIONS.map(loc => {
+          const isSelected = loc.id === state.selectedLocationId;
+          const color = getPinColor(loc.category);
+          const scale = isSelected ? 'scale(1.24)' : 'scale(1)';
+          return `
+            <g
+              data-loc-id="${loc.id}"
+              class="campus-map-pin cursor-pointer transition-transform"
+              transform="translate(${loc.x}, ${loc.y})"
+            >
+              <g transform="${scale}">
+                ${loc.isLiveEvent || isSelected ? `<circle cx="0" cy="-14" r="18" fill="${color}" opacity="0.3" />` : ''}
+                <path d="M 0 -34 C -11 -34 -19 -26 -19 -15 C -19 -2 0 12 0 12 C 0 12 19 -2 19 -15 C 19 -26 11 -34 0 -34 Z"
+                      fill="${color}" stroke="#FFFFFF" stroke-width="2.5" />
+                <circle cx="0" cy="-16" r="6" fill="#FFFFFF" />
+                ${loc.isLiveEvent ? `<rect x="-24" y="-52" width="48" height="15" rx="7" fill="#E03A3E"/><text x="0" y="-42" text-anchor="middle" fill="#FFFFFF" font-size="8.5" font-weight="900">LIVE</text>` : ''}
+              </g>
+            </g>
+          `;
+        }).join('');
+
+        layer.querySelectorAll('.campus-map-pin').forEach(pin => {
+          pin.addEventListener('click', () => {
+            selectLocation(pin.dataset.locId);
+          });
+        });
+      }
+
+      function renderSelectedLocationDetail() {
+        const loc = CAMPUS_LOCATIONS.find(l => l.id === state.selectedLocationId) || CAMPUS_LOCATIONS[0];
+        const card = document.getElementById('selectedLocationCard');
+        const sceneIdx = PANO_SCENES.findIndex(s => s.id === loc.sceneId);
+
+        card.innerHTML = `
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-2">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-white text-leaf-dark border border-stone-200">
+                  ${loc.catLabel}
+                </span>
+                ${loc.accessible ? `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-leaf-light text-leaf-dark">♿ Ramah Kursi Roda</span>` : ''}
+                ${loc.isLiveEvent ? `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-pinred text-white">🔥 Event Berlangsung</span>` : ''}
+              </div>
+              <h4 class="font-display font-black text-lg sm:text-xl text-charcoal mt-1.5">${loc.name}</h4>
+            </div>
+            <div class="text-right text-xs text-stone-500">
+              <p class="font-bold text-charcoal">${loc.floor}</p>
+              <p>${loc.hours}</p>
+            </div>
+          </div>
+
+          <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mb-3">${loc.desc}</p>
+
+          <div class="bg-white rounded-xl p-3 border border-stone-200/80 text-xs text-stone-700 mb-4">
+            <strong class="text-leaf-dark">📍 Patokan Mudah:</strong> ${loc.landmark}
+          </div>
+
+          <div class="flex flex-wrap gap-2.5">
+            <button type="button" id="detailMakeRouteBtn" class="bg-pinred hover:bg-pinred-dark text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-pin transition-colors">
+              🧭 Buat Rute ke Sini
+            </button>
+            ${sceneIdx !== -1 ? `
+              <button type="button" id="detailOpen360Btn" class="bg-leaf hover:bg-leaf-dark text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors">
+                🎥 Lihat di Tur 360°
+              </button>
+            ` : ''}
+            <a href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors">
+              <span>▶ Video YouTube 360°</span>
+            </a>
+          </div>
+        `;
+
+        document.getElementById('detailMakeRouteBtn').addEventListener('click', () => {
+          setDestinationAndScrollToRoute(loc.id);
+        });
+
+        const open360Btn = document.getElementById('detailOpen360Btn');
+        if (open360Btn) {
+          open360Btn.addEventListener('click', () => {
+            switchPanoScene(sceneIdx);
+            document.getElementById('eksplorasi-360').scrollIntoView({ behavior: 'smooth' });
+          });
+        }
+      }
+
+      function renderDirectoryList() {
+        const listEl = document.getElementById('directoryList');
+        const q = state.searchQuery.trim().toLowerCase();
+
+        const filtered = CAMPUS_LOCATIONS.filter(loc => {
+          const matchCat = state.activeCategory === 'all' || loc.category === state.activeCategory;
+          const matchQuery = !q ||
+            loc.name.toLowerCase().includes(q) ||
+            loc.desc.toLowerCase().includes(q) ||
+            loc.landmark.toLowerCase().includes(q);
+          return matchCat && matchQuery;
+        <div class="flex flex-wrap gap-4 text-xs font-semibold">
+          <a href="#eksplorasi-360" class="hover:text-white transition-colors">Eksplorasi 360°</a>
+          <a href="#peta-direktori" class="hover:text-white transition-colors">Peta & Direktori</a>
+          <a href="#panduan-rute" class="hover:text-white transition-colors">Panduan Rute</a>
+          <a href="#komunitas-tips" class="hover:text-white transition-colors">Komunitas & Tips</a>
+          <a href="#ekosistem-merch" class="hover:text-white transition-colors">Kolaborasi & Merch</a>
+          <a href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF" target="_blank" rel="noopener noreferrer" class="text-pinred hover:text-white transition-colors">▶ YouTube @way360ui</a>
+        </div>
+      </div>
+      <!-- Simulated YouTube 360 Video Frame -->
+      <a
+        href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block group rounded-2xl bg-stone-900 hover:bg-stone-800 text-white p-5 mb-4 border border-stone-700 hover:border-pinred relative overflow-hidden transition-all"
+      >
+        <div class="flex items-center justify-between text-xs text-stone-400 mb-3">
+          <span>Channel Resmi: <strong class="text-white">@way360ui</strong></span>
+          <span class="px-2 py-0.5 rounded bg-pinred text-white font-bold">4K 360° VR</span>
+        </div>
+        <div class="py-6 text-center">
+          <div class="w-14 h-14 rounded-full bg-pinred group-hover:scale-110 mx-auto flex items-center justify-center shadow-pin mb-3 transition-transform">
+            <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <p class="font-display font-bold text-base">Tonton Koleksi Video 360° di YouTube @way360ui</p>
+          <p class="text-xs text-stone-400 mt-1">Klik untuk membuka channel resmi WAY360 Vokasi UI di tab baru ↗</p>
+        </div>
+      </a>
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button id="doneYoutubeModalBtn" type="button" class="bg-cream hover:bg-stone-200 text-charcoal font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-stone-200 transition-colors">
+          Tutup
+        </button>
+        <a
+          href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="bg-pinred hover:bg-pinred-dark text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-pin transition-colors"
+        >
+          ▶ Kunjungi YouTube @way360ui
+        </a>
+      </div>
+    </div>
+  </div>
+                ${loc.isLiveEvent ? `<span class="flex-shrink-0 text-[10px] font-black px-2 py-0.5 rounded-full bg-pinred text-white">LIVE</span>` : ''}
+              </div>
+              <p class="text-xs text-stone-600 line-clamp-2 mt-1">${loc.desc}</p>
+            </div>
+          `;
+        }).join('');
+
+        listEl.querySelectorAll('.dir-item-card').forEach(card => {
+          card.addEventListener('click', () => {
+            selectLocation(card.dataset.dirId);
+          });
+        });
+      }
+
+      function selectLocation(locId) {
+        state.selectedLocationId = locId;
+        renderMapPins();
+        renderSelectedLocationDetail();
+        renderDirectoryList();
+      }
+
+      /* -------------------------------------------------------------------
+         5. SMART ROUTE GUIDANCE & ACCESSIBILITY ENGINE
+         ------------------------------------------------------------------- */
+      function populateRouteDestinations() {
+        const destSelect = document.getElementById('routeDestSelect');
+        destSelect.innerHTML = CAMPUS_LOCATIONS.map(loc => `
+          <option value="${loc.id}">${loc.name}</option>
+        `).join('');
+        destSelect.value = 'auditorium';
+      }
+
+      function generateSmartRoute() {
+        const originVal = document.getElementById('routeOriginSelect').value;
+        const destVal = document.getElementById('routeDestSelect').value;
+        const container = document.getElementById('routeResultContainer');
+
+        const originLabels = {
+          'parkir-utama': 'Area Parkir Utama (P)',
+          'bundaran-utama': 'Bundaran Utama Vokasi UI',
+          'jl-tegangan-tinggi': 'Gerbang Masuk Jl. Tegangan Tinggi',
+          'parkir-samping': 'Parkir Motor (Sisi Barat Gedung VA)'
+        };
+
+        const originName = originLabels[originVal] || 'Titik Awal';
+        const destObj = CAMPUS_LOCATIONS.find(l => l.id === destVal) || CAMPUS_LOCATIONS[0];
+        const isAcc = state.routeMode === 'accessible';
+
+        // Draw live animated route path on the Vokasi UI SVG Map
+        drawRouteOnMap(originVal, destVal, isAcc);
+
+        if (originVal === destVal) {
+          container.innerHTML = `
+            <div class="text-center py-6">
+              <p class="font-display font-black text-lg text-leaf-dark">🎉 Kamu Sudah Berada di Titik Tujuan!</p>
+              <p class="text-xs sm:text-sm text-stone-600 mt-1">Titik awal dan tujuan sama (${destObj.name}).</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Dynamic step-by-step route synthesis based on real Vokasi UI geography
+        const distance = isAcc ? 240 : 185;
+        const minutes = isAcc ? 4 : 3;
+
+        const steps = [
+          {
+            icon: '🚶',
+            title: `Mulai dari ${originName}`,
+            detail: isAcc
+              ? 'Ikuti jalur tepi jalan yang rata dan bebas anak tangga menuju Bundaran Utama Vokasi UI.'
+              : 'Bergerak menuju Bundaran Utama Vokasi UI sebagai titik orientasi pusat.'
+          },
+          {
+            icon: isAcc ? '♿' : '⚡',
+            title: isAcc ? 'Gunakan Koridor Landai & Selasar Lantai 1' : 'Ambil Jalur Langsung Sesuai Arah Mata Angin',
+            detail: ['gedung-vb', 'kantin-vokasi'].includes(destObj.id)
+              ? 'Dari Bundaran Utama, ikuti jalan melengkung ke arah timur melewati dua sayap Gedung VB Utara hingga ujung timur (Kantin Vokasi UI).'
+              : ['lembaga-vokasi'].includes(destObj.id)
+                ? 'Lembaga Vokasi UI (Training Center) berada tepat di tepi tenggara Bundaran Utama.'
+                : destObj.id === 'auditorium'
+                  ? 'Dari Bundaran Utama, ambil jalan ke selatan melewati Gedung VA (tengah) hingga Gedung VC Selatan—Gedung Auditorium berada tepat di belakang Gedung VC.'
+                  : 'Dari Bundaran Utama, ambil jalan ke arah selatan melewati sisi barat Gedung Vokasi A (VA • tengah) menuju kawasan selatan kampus.'
+          },
+          {
+            icon: '🧭',
+            title: `Menuju Area ${destObj.floor}`,
+            detail: isAcc && destObj.category === 'gedung'
+              ? `Gunakan akses pintu datar lantai 1 atau lift/ramp menuju ${destObj.floor}. Patokan: ${destObj.landmark}`
+              : `Ikuti papan petunjuk arah menuju ${destObj.name}. Patokan: ${destObj.landmark}`
+          },
+          {
+            icon: '🏁',
+            title: `Tiba di ${destObj.name}`,
+            detail: `Selamat datang! Jam operasional: ${destObj.hours}.`
+          }
+        ];
+
+        container.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-stone-200">
+            <div>
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <span class="text-xs font-extrabold px-3 py-1 rounded-full ${isAcc ? 'bg-sky-100 text-sky-800' : 'bg-pinred-light text-pinred'}">
+                  ${isAcc ? '♿ Jalur Aksesibilitas Aktif (Tanpa Tangga)' : '⚡ Rute Tercepat / Shortcut'}
+                </span>
+                <span class="text-xs font-bold text-stone-500">Estimasi: <strong class="text-charcoal">${minutes} Menit</strong> (±${distance} m)</span>
+              </div>
+              <h4 class="font-display font-black text-base sm:text-lg text-charcoal">
+                ${originName} → ${destObj.name}
+              </h4>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="viewRouteOnMapBtn" class="bg-charcoal hover:bg-stone-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors">
+                🗺️ Lihat Jalur di Peta
+              </button>
+              <button type="button" id="previewRoute360Btn" class="bg-leaf hover:bg-leaf-dark text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors">
+                🎥 Cek Area Tujuan di 360°
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            ${steps.map((st, idx) => `
+              <div class="flex items-start gap-3.5 bg-cream/75 rounded-2xl p-4 border border-stone-200/80">
+                <div class="w-8 h-8 rounded-full bg-charcoal text-white font-display font-black text-xs flex items-center justify-center flex-shrink-0">
+                  ${idx + 1}
+                </div>
+                <div>
+                  <p class="font-display font-extrabold text-sm text-charcoal">${st.icon} ${st.title}</p>
+                  <p class="text-xs text-stone-600 leading-relaxed mt-1">${st.detail}</p>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        document.getElementById('viewRouteOnMapBtn').addEventListener('click', () => {
+          selectLocation(destObj.id);
+          document.getElementById('peta-direktori').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.getElementById('previewRoute360Btn').addEventListener('click', () => {
+          const sIdx = PANO_SCENES.findIndex(s => s.id === destObj.sceneId);
+          if (sIdx !== -1) {
+            switchPanoScene(sIdx);
+            document.getElementById('eksplorasi-360').scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      }
+
+      function setDestinationAndScrollToRoute(locId) {
+        const destSelect = document.getElementById('routeDestSelect');
+        if ([...destSelect.options].some(o => o.value === locId)) {
+          destSelect.value = locId;
+        }
+        generateSmartRoute();
+        document.getElementById('panduan-rute').scrollIntoView({ behavior: 'smooth' });
+      }
+
+      /* -------------------------------------------------------------------
+         6. COMMUNITY TIPS & FEEDBACK WALL
+         ------------------------------------------------------------------- */
+      function renderTipsGrid() {
+        const grid = document.getElementById('tipsGrid');
+        const filtered = state.activeTipCategory === 'all'
+          ? VOKASI_TIPS
+          : VOKASI_TIPS.filter(t => t.category === state.activeTipCategory);
+
+        grid.innerHTML = filtered.map(tip => `
+          <article class="bg-white rounded-3xl p-5 sm:p-6 shadow-sm border border-stone-200/90 flex flex-col justify-between hover:border-leaf transition-colors">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <span class="text-[11px] font-extrabold px-3 py-1 rounded-full bg-cream text-charcoal border border-stone-200">
+                  ${tip.catLabel}
+                </span>
+                <span class="text-[11px] font-bold text-pinred">${tip.handle}</span>
+              </div>
+              <h3 class="font-display font-black text-base sm:text-lg text-charcoal leading-snug mb-2">
+                ${tip.title}
+              </h3>
+              <p class="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                ${tip.content}
+              </p>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+              <span class="font-semibold text-charcoal">${tip.author}</span>
+              <span>▶ ${tip.views}</span>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      function renderCommunityWall() {
+        const list = document.getElementById('communityWallList');
+        document.getElementById('feedbackCountBadge').textContent = `${state.feedbacks.length} Masukan`;
+
+        list.innerHTML = state.feedbacks.map(fb => {
+          const stars = '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating);
+          return `
+            <div class="bg-white rounded-2xl p-3.5 border border-stone-200/90 shadow-sm">
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="font-display font-extrabold text-xs sm:text-sm text-charcoal">${fb.name}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-leaf-light text-leaf-dark">${fb.type}</span>
+              </div>
+              <div class="text-amber-400 text-xs mb-1">${stars}</div>
+              <p class="text-xs text-stone-600 leading-relaxed">${fb.message}</p>
+              <p class="text-[10px] text-stone-400 mt-1.5">${fb.time}</p>
+            </div>
+          `;
+        }).join('');
+      }
+
+      /* -------------------------------------------------------------------
+         7. HERO QUICK SEARCH & GLOBAL UI INTERACTIONS
+         ------------------------------------------------------------------- */
+      function initHeroSearch() {
+        const input = document.getElementById('heroSearchInput');
+        const dropdown = document.getElementById('heroSearchDropdown');
+        const searchBtn = document.getElementById('heroSearchBtn');
+
+        function updateDropdown() {
+          const q = input.value.trim().toLowerCase();
+          if (!q) {
+            dropdown.classList.add('hidden');
+            return;
+          }
+
+          const matches = CAMPUS_LOCATIONS.filter(loc =>
+            loc.name.toLowerCase().includes(q) ||
+            loc.catLabel.toLowerCase().includes(q) ||
+            loc.desc.toLowerCase().includes(q)
+          );
+
+          if (matches.length === 0) {
+            dropdown.innerHTML = `<div class="p-3.5 text-xs text-stone-500">Tidak ada lokasi yang cocok dengan "${input.value}".</div>`;
+          } else {
+            dropdown.innerHTML = matches.map(m => `
+              <button type="button" data-match-id="${m.id}" class="hero-match-item w-full text-left px-4 py-3 hover:bg-cream border-b last:border-b-0 border-stone-100 flex items-center justify-between gap-2">
+                <div>
+                  <p class="font-display font-extrabold text-sm text-charcoal">${m.name}</p>
+                  <p class="text-xs text-stone-500">${m.catLabel} • ${m.floor}</p>
+                </div>
+                <span class="text-xs font-bold text-leaf">Lihat Peta →</span>
+              </button>
+            `).join('');
+          }
+
+          dropdown.classList.remove('hidden');
+
+          dropdown.querySelectorAll('.hero-match-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const id = btn.dataset.matchId;
+              dropdown.classList.add('hidden');
+              selectLocation(id);
+              document.getElementById('peta-direktori').scrollIntoView({ behavior: 'smooth' });
+            });
+          });
+        }
+
+        input.addEventListener('input', updateDropdown);
+        searchBtn.addEventListener('click', () => {
+          state.searchQuery = input.value;
+          document.getElementById('directorySearchInput').value = input.value;
+          renderDirectoryList();
+          dropdown.classList.add('hidden');
+          document.getElementById('peta-direktori').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('#heroSearchInput') && !e.target.closest('#heroSearchDropdown')) {
+            dropdown.classList.add('hidden');
+          }
+        });
+
+        // Quick suggestion chips
+        document.querySelectorAll('.quick-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const locId = chip.dataset.quickLoc;
+            selectLocation(locId);
+            document.getElementById('peta-direktori').scrollIntoView({ behavior: 'smooth' });
+          });
+        });
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const banner = document.getElementById('toastBanner');
+        document.getElementById('toastMessage').textContent = msg;
+        banner.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          banner.classList.add('hidden');
+        }, 3800);
+      }
+
+      /* -------------------------------------------------------------------
+         8. INITIALIZE EVERYTHING ON DOM READY
+         ------------------------------------------------------------------- */
+      document.addEventListener('DOMContentLoaded', () => {
+        // Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+          document.getElementById('menuIconOpen').classList.toggle('hidden');
+          document.getElementById('menuIconClose').classList.toggle('hidden');
+        });
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+          link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+            document.getElementById('menuIconOpen').classList.remove('hidden');
+            document.getElementById('menuIconClose').classList.add('hidden');
+          });
+        });
+
+        // Init Hero Search
+        initHeroSearch();
+
+        // Init 360° Viewer
+        switchPanoScene(0);
+        initPanoControls();
+
+        // Init Map & Directory
+        applyMapVisualMode();
+        renderMapPins();
+        renderSelectedLocationDetail();
+        renderDirectoryList();
+
+        // Map Mode Switcher (Denah Bersih vs Satelit Hijau UI)
+        const cleanBtn = document.getElementById('mapModeCleanBtn');
+        const satBtn = document.getElementById('mapModeSatBtn');
+        cleanBtn.addEventListener('click', () => {
+          state.mapMode = 'clean';
+          cleanBtn.classList.add('bg-leaf', 'text-white', 'shadow-sm');
+          cleanBtn.classList.remove('text-stone-600');
+          satBtn.classList.remove('bg-leaf', 'text-white', 'shadow-sm');
+          satBtn.classList.add('text-stone-600');
+          applyMapVisualMode();
+        });
+        satBtn.addEventListener('click', () => {
+          state.mapMode = 'satellite';
+          satBtn.classList.add('bg-leaf', 'text-white', 'shadow-sm');
+          satBtn.classList.remove('text-stone-600');
+          cleanBtn.classList.remove('bg-leaf', 'text-white', 'shadow-sm');
+          cleanBtn.classList.add('text-stone-600');
+          applyMapVisualMode();
+        });
+
+        // Map Zoom Controls
+        document.getElementById('mapZoomInBtn').addEventListener('click', () => {
+          state.mapZoom = Math.min(1.6, +(state.mapZoom + 0.15).toFixed(2));
+          applyMapZoom();
+        });
+        document.getElementById('mapZoomOutBtn').addEventListener('click', () => {
+          state.mapZoom = Math.max(0.85, +(state.mapZoom - 0.15).toFixed(2));
+          applyMapZoom();
+        });
+        document.getElementById('mapZoomResetBtn').addEventListener('click', () => {
+          state.mapZoom = 1;
+          applyMapZoom();
+        });
+
+        document.getElementById('directorySearchInput').addEventListener('input', (e) => {
+          state.searchQuery = e.target.value;
+          renderDirectoryList();
+        });
+
+        document.querySelectorAll('.cat-pill').forEach(pill => {
+          pill.addEventListener('click', () => {
+            document.querySelectorAll('.cat-pill').forEach(p => {
+              p.classList.remove('bg-leaf', 'text-white');
+              p.classList.add('bg-cream', 'text-stone-700');
+            });
+            pill.classList.add('bg-leaf', 'text-white');
+            pill.classList.remove('bg-cream', 'text-stone-700');
+            state.activeCategory = pill.dataset.cat;
+            renderDirectoryList();
+          });
+        });
+
+        // Init Smart Route Guidance
+        populateRouteDestinations();
+        generateSmartRoute();
+
+        document.getElementById('routeOriginSelect').addEventListener('change', generateSmartRoute);
+        document.getElementById('routeDestSelect').addEventListener('change', generateSmartRoute);
+
+        document.getElementById('swapRouteBtn').addEventListener('click', () => {
+          const originSel = document.getElementById('routeOriginSelect');
+          const destSel = document.getElementById('routeDestSelect');
+          if ([...originSel.options].some(o => o.value === destSel.value)) {
+            const temp = originSel.value;
+            originSel.value = destSel.value;
+            destSel.value = temp;
+          }
+          generateSmartRoute();
+        });
+
+        const shortcutBtn = document.getElementById('modeShortcutBtn');
+        const accessibleBtn = document.getElementById('modeAccessibleBtn');
+
+        shortcutBtn.addEventListener('click', () => {
+          state.routeMode = 'shortcut';
+          shortcutBtn.classList.add('bg-leaf', 'text-white', 'shadow-sm');
+          shortcutBtn.classList.remove('text-stone-600');
+          accessibleBtn.classList.remove('bg-leaf', 'text-white', 'shadow-sm');
+          accessibleBtn.classList.add('text-stone-600');
+          generateSmartRoute();
+        });
+
+        accessibleBtn.addEventListener('click', () => {
+          state.routeMode = 'accessible';
+          accessibleBtn.classList.add('bg-leaf', 'text-white', 'shadow-sm');
+          accessibleBtn.classList.remove('text-stone-600');
+          shortcutBtn.classList.remove('bg-leaf', 'text-white', 'shadow-sm');
+          shortcutBtn.classList.add('text-stone-600');
+          generateSmartRoute();
+        });
+
+        // Init Community Tips & Feedback Loop
+        renderTipsGrid();
+        renderCommunityWall();
+
+        document.querySelectorAll('.tip-filter-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.tip-filter-btn').forEach(b => {
+              b.classList.remove('bg-charcoal', 'text-white');
+              b.classList.add('bg-white', 'text-stone-700');
+            });
+            btn.classList.add('bg-charcoal', 'text-white');
+            btn.classList.remove('bg-white', 'text-stone-700');
+            state.activeTipCategory = btn.dataset.tipCat;
+            renderTipsGrid();
+          });
+        });
+
+        // Star rating buttons
+        document.querySelectorAll('.star-btn').forEach(starBtn => {
+          starBtn.addEventListener('click', () => {
+            const val = Number(starBtn.dataset.star);
+            state.selectedStar = val;
+            document.querySelectorAll('.star-btn').forEach(s => {
+              s.classList.toggle('text-amber-400', Number(s.dataset.star) <= val);
+              s.classList.toggle('text-stone-300', Number(s.dataset.star) > val);
+            });
+            const labels = ['Kurang', 'Cukup', 'Lumayan', 'Membantu', 'Sangat Membantu!'];
+            document.getElementById('starRatingLabel').textContent = `${val}/5 ${labels[val - 1]}`;
+          });
+        });
+
+        // Feedback submission
+        document.getElementById('communityFeedbackForm').addEventListener('submit', (e) => {
+          e.preventDefault();
+          const nameInput = document.getElementById('fbName');
+          const typeInput = document.getElementById('fbType');
+          const msgInput = document.getElementById('fbMessage');
+
+          state.feedbacks.unshift({
+            name: nameInput.value.trim(),
+            type: typeInput.value,
+            rating: state.selectedStar,
+            message: msgInput.value.trim(),
+            time: 'Baru saja'
+          });
+
+          renderCommunityWall();
+          e.target.reset();
+          showToast('Terima kasih! Masukanmu berhasil ditambahkan ke papan komunitas WAY360.');
+        });
+
+        // YouTube 360° Modal
+        const ytModal = document.getElementById('youtubeModal');
+        document.getElementById('openYoutubeModalBtn').addEventListener('click', () => ytModal.classList.remove('hidden'));
+        document.getElementById('closeYoutubeModalBtn').addEventListener('click', () => ytModal.classList.add('hidden'));
+        document.getElementById('doneYoutubeModalBtn').addEventListener('click', () => ytModal.classList.add('hidden'));
+
+        // Merch Detail Modal
+        const merchModal = document.getElementById('merchModal');
+        document.querySelectorAll('.merch-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('merchModalTitle').textContent = btn.dataset.merch;
+            document.getElementById('merchModalPrice').textContent = btn.dataset.price;
+            merchModal.classList.remove('hidden');
+          });
+        });
+        document.getElementById('closeMerchModalBtn').addEventListener('click', () => merchModal.classList.add('hidden'));
+        document.getElementById('reserveMerchBtn').addEventListener('click', () => {
+          const item = document.getElementById('merchModalTitle').textContent;
+          merchModal.classList.add('hidden');
+          showToast(`Minat pre-order untuk "${item}" tercatat! Sampai jumpa di Booth WAY360.`);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
