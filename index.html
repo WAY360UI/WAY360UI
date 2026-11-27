@@ -795,6 +795,38 @@
         </div>
 
       </div>
+
+      <!-- NEW: Row-by-Row Map & Direct YouTube 360° Video Section -->
+      <div id="daftar-video-maps" class="mt-10 bg-white rounded-3xl p-5 sm:p-8 shadow-soft border border-stone-200/90">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 mb-6 border-b border-stone-200">
+          <div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-pinred bg-pinred-light px-3 py-1 rounded-full mb-2">
+              <span>🎬</span> Daftar Titik Peta & Video Tur 360°
+            </span>
+            <h3 class="font-display font-black text-xl sm:text-2xl text-charcoal">
+              Pilih Lokasi di Peta, Langsung Tonton di <span class="text-pinred">YouTube @way360ui</span>
+            </h3>
+            <p class="text-xs sm:text-sm text-stone-600 mt-1">
+              Setiap baris terhubung dengan pin di peta kampus Vokasi UI dan langsung mengarahkanmu ke video tur 360° di channel resmi YouTube WAY360.
+            </p>
+          </div>
+
+          <a
+            href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="self-start md:self-auto inline-flex items-center gap-2 bg-charcoal hover:bg-pinred text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition-colors"
+          >
+            <span>▶ Semua Video di @way360ui</span>
+          </a>
+        </div>
+
+        <!-- Row-by-Row List Container -->
+        <div id="mapYoutubeRowsList" class="divide-y divide-stone-200/80">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -1711,7 +1743,8 @@
         dragStartX: 0,
         dragStartOffset: 0,
         autoRotate: false,
-        selectedLocationId: 'lembaga-vokasi',
+        selectedLocationId: 'gedung-va',
+        activeVideoId: null,
         activeCategory: 'all',
         searchQuery: '',
         mapMode: 'clean', // 'clean' | 'satellite'
@@ -2182,8 +2215,8 @@
                 🎥 Lihat di Tur 360°
               </button>
             ` : ''}
-            <a href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors">
-              <span>▶ Video YouTube 360°</span>
+            <a href="${loc.youtubeUrl || 'https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF'}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-colors">
+              <span>▶ Video Rute YouTube</span>
             </a>
           </div>
         `;
@@ -2201,91 +2234,6 @@
         }
       }
 
-      function renderDirectoryList() {
-        const listEl = document.getElementById('directoryList');
-        const q = state.searchQuery.trim().toLowerCase();
-
-        const filtered = CAMPUS_LOCATIONS.filter(loc => {
-          const matchCat = state.activeCategory === 'all' || loc.category === state.activeCategory;
-          const matchQuery = !q ||
-            loc.name.toLowerCase().includes(q) ||
-            loc.desc.toLowerCase().includes(q) ||
-            loc.landmark.toLowerCase().includes(q);
-          return matchCat && matchQuery;
-        <div class="flex flex-wrap gap-4 text-xs font-semibold">
-          <a href="#eksplorasi-360" class="hover:text-white transition-colors">Eksplorasi 360°</a>
-          <a href="#peta-direktori" class="hover:text-white transition-colors">Peta & Direktori</a>
-          <a href="#panduan-rute" class="hover:text-white transition-colors">Panduan Rute</a>
-          <a href="#komunitas-tips" class="hover:text-white transition-colors">Komunitas & Tips</a>
-          <a href="#ekosistem-merch" class="hover:text-white transition-colors">Kolaborasi & Merch</a>
-          <a href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF" target="_blank" rel="noopener noreferrer" class="text-pinred hover:text-white transition-colors">▶ YouTube @way360ui</a>
-        </div>
-      </div>
-
-      <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-stone-400">
-        <div>
-          <p class="font-bold text-stone-200">
-            WAY360 — Kelompok 2 | Kuliah Umum Humas Industri Kreatif (Humas B)
-          </p>
-          <p class="mt-0.5">Sekolah Vokasi Universitas Indonesia • Depok, Jawa Barat</p>
-        </div>
-        <p class="bg-stone-800/90 text-stone-300 px-3.5 py-2 rounded-xl border border-stone-700">
-          Prototype Web Interaktif • Pengembangan Akademik IP WAY360
-        </p>
-      </div>
-    </div>
-  </footer>
-
-  <!-- =====================================================================
-       MODALS & TOAST NOTIFICATION (NO ALERT/CONFIRM USED)
-       ===================================================================== -->
-  <!-- YouTube 360° Ecosystem Preview Modal -->
-  <div id="youtubeModal" class="hidden fixed inset-0 z-50 bg-charcoal/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative">
-      <button id="closeYoutubeModalBtn" type="button" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-charcoal font-bold">✕</button>
-      <span class="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-pinred bg-pinred-light px-3 py-1 rounded-full mb-3">
-        ▶ Ekosistem Multiplatform WAY360
-      </span>
-      <h3 class="font-display font-black text-xl text-charcoal mb-2">
-        Video Tur Virtual 360° Penuh di YouTube
-      </h3>
-      <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mb-4">
-        Dalam ekosistem IP <strong>WAY360</strong>, <strong>YouTube</strong> berperan sebagai ruang eksplorasi video 360° berdurasi penuh (<em>walkthrough</em> menyeluruh dari gerbang hingga ruang kelas), sedangkan <strong>Website WAY360</strong> ini berfungsi sebagai pusat navigasi interaktif, direktori gedung, dan panduan rute cepat.
-      </p>
-      <!-- Simulated YouTube 360 Video Frame -->
-      <a
-        href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="block group rounded-2xl bg-stone-900 hover:bg-stone-800 text-white p-5 mb-4 border border-stone-700 hover:border-pinred relative overflow-hidden transition-all"
-      >
-        <div class="flex items-center justify-between text-xs text-stone-400 mb-3">
-          <span>Channel Resmi: <strong class="text-white">@way360ui</strong></span>
-          <span class="px-2 py-0.5 rounded bg-pinred text-white font-bold">4K 360° VR</span>
-        </div>
-        <div class="py-6 text-center">
-          <div class="w-14 h-14 rounded-full bg-pinred group-hover:scale-110 mx-auto flex items-center justify-center shadow-pin mb-3 transition-transform">
-            <svg class="w-6 h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          </div>
-          <p class="font-display font-bold text-base">Tonton Koleksi Video 360° di YouTube @way360ui</p>
-          <p class="text-xs text-stone-400 mt-1">Klik untuk membuka channel resmi WAY360 Vokasi UI di tab baru ↗</p>
-        </div>
-      </a>
-      <div class="flex flex-wrap items-center justify-end gap-2">
-        <button id="doneYoutubeModalBtn" type="button" class="bg-cream hover:bg-stone-200 text-charcoal font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl border border-stone-200 transition-colors">
-          Tutup
-        </button>
-        <a
-          href="https://youtube.com/@way360ui?si=PV1j3gxvzccwY1aF"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="bg-pinred hover:bg-pinred-dark text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-pin transition-colors"
-        >
-          ▶ Kunjungi YouTube @way360ui
-        </a>
-      </div>
-    </div>
-  </div>
       function renderDirectoryList() {
         const listEl = document.getElementById('directoryList');
         const q = state.searchQuery.trim().toLowerCase();
@@ -2344,6 +2292,174 @@
         renderMapPins();
         renderSelectedLocationDetail();
         renderDirectoryList();
+        renderMapYoutubeRows();
+      }
+
+      const YOUTUBE_ROUTE_VIDEOS = [
+        {
+          num: 1,
+          title: 'Jembatan Triwarna – Gedung VA & Taman Vokasi',
+          locationId: 'gedung-va',
+          videoId: 'IUdzF1PPr4E',
+          url: 'https://youtu.be/IUdzF1PPr4E?si=qPjQFX3Im_wjwMLJ',
+          tag: 'Gedung Pusat & Taman',
+          desc: 'Panduan rute dari Jembatan Triwarna menuju Gedung Vokasi A (VA) sebagai pusat administrasi serta area Taman Vokasi.'
+        },
+        {
+          num: 2,
+          title: 'Jembatan Triwarna – VCOOP',
+          locationId: 'gedung-bc',
+          videoId: '0Reor6EWHWg',
+          url: 'https://youtu.be/0Reor6EWHWg?si=E85Y623He61kgVpa',
+          tag: 'Bisnis Center & TEFA',
+          desc: 'Panduan jalur dari Jembatan Triwarna menuju area VCOOP / Gedung Bisnis Center (BC) Vokasi UI.'
+        },
+        {
+          num: 3,
+          title: 'Jembatan Triwarna – Gedung VB',
+          locationId: 'gedung-vb',
+          videoId: 'oLAOKr_d8d0',
+          url: 'https://youtu.be/oLAOKr_d8d0?si=5cYSKOjkeMAVDNn5',
+          tag: 'Gedung Kuliah Utara',
+          desc: 'Panduan langkah demi langkah dari Jembatan Triwarna menyusuri jalan utara menuju Gedung Vokasi B (VB).'
+        },
+        {
+          num: 4,
+          title: 'Jembatan Triwarna – Kanvok & Banyu Mili',
+          locationId: 'kantin-vokasi',
+          videoId: 'RhBQUpjnVQM',
+          url: 'https://youtu.be/RhBQUpjnVQM?si=-z7FCPhGsMT_87le',
+          tag: 'Kantin & Kuliner',
+          desc: 'Rute visual dari Jembatan Triwarna langsung menuju Kantin Vokasi (Kanvok) dan area Banyu Mili.'
+        },
+        {
+          num: 5,
+          title: 'Jembatan Triwarna – Parkiran Motor dan Mobil',
+          locationId: 'parkir-utama',
+          videoId: 'X6nVMu93s9k',
+          url: 'https://youtu.be/X6nVMu93s9k?si=7OIEs8ePh05OhhE4',
+          tag: 'Akses & Parkir',
+          desc: 'Panduan arah dari Jembatan Triwarna menuju area Parkiran Mobil (Parkir Utama P) dan Parkiran Motor Vokasi UI.'
+        },
+        {
+          num: 6,
+          title: 'Jembatan Triwarna – Lapangan Basket, Futsal, dan Ruang Terbuka Hijau',
+          locationId: 'lapangan-futsal',
+          videoId: 'EViEGcLioPE',
+          url: 'https://youtu.be/EViEGcLioPE?si=FgCGO_JdXTuGPAiK',
+          tag: 'Olahraga & RTH',
+          desc: 'Rute menuju fasilitas Lapangan Basket, Lapangan Futsal, dan Ruang Terbuka Hijau di kawasan Vokasi UI.'
+        },
+        {
+          num: 7,
+          title: 'Jembatan Triwarna – Taman Literasi',
+          locationId: 'lembaga-vokasi',
+          videoId: 'n4DA5FyPmHo',
+          url: 'https://youtu.be/n4DA5FyPmHo?si=nCF9LHjfzfuBarf5',
+          tag: 'Spot Belajar & Literasi',
+          desc: 'Panduan menuju area Taman Literasi sebagai ruang baca dan diskusi terbuka mahasiswa Vokasi UI.'
+        },
+        {
+          num: 8,
+          title: 'Jembatan Triwarna – Gedung VC & Auditorium Vokasi',
+          locationId: 'auditorium',
+          videoId: 'hNUwN97pt2w',
+          url: 'https://youtu.be/hNUwN97pt2w?si=BvP7yO7sBHS6dIGg',
+          tag: 'Gedung Selatan & Auditorium',
+          desc: 'Panduan lengkap dari Jembatan Triwarna menuju Gedung Vokasi C (VC) hingga Gedung Auditorium Vokasi di belakang VC.'
+        }
+      ];
+
+      function renderMapYoutubeRows() {
+        const container = document.getElementById('mapYoutubeRowsList');
+        if (!container) return;
+
+        container.innerHTML = YOUTUBE_ROUTE_VIDEOS.map((item) => {
+          const isSelected = item.locationId === state.selectedLocationId;
+          const isPlaying = state.activeVideoId === item.videoId;
+
+          return `
+            <div class="py-4 px-3 rounded-2xl transition-colors ${isSelected || isPlaying ? 'bg-cream' : 'hover:bg-cream/60'}">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <!-- Left: Route Number, Tag & Title -->
+                <div class="flex items-start gap-3.5">
+                  <div class="w-9 h-9 rounded-xl ${isSelected || isPlaying ? 'bg-pinred text-white' : 'bg-leaf text-white'} font-display font-black text-sm flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                    ${item.num}
+                  </div>
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                      <span class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-leaf-light text-leaf-dark">
+                        ${item.tag}
+                      </span>
+                      <span class="text-xs font-bold text-stone-500">Titik Awal: Jembatan Triwarna</span>
+                    </div>
+                    <h4 class="font-display font-black text-base sm:text-lg text-charcoal">${item.title}</h4>
+                    <p class="text-xs text-stone-600 mt-0.5 max-w-2xl">${item.desc}</p>
+                  </div>
+                </div>
+
+                <!-- Right: Map Focus, Inline Player Toggle & Direct YouTube Link -->
+                <div class="flex flex-wrap items-center gap-2 lg:flex-shrink-0 pl-12 lg:pl-0">
+                  <button
+                    type="button"
+                    data-row-map-id="${item.locationId}"
+                    class="row-focus-map-btn inline-flex items-center gap-1.5 bg-white hover:bg-leaf hover:text-white text-charcoal border border-stone-200 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-colors"
+                  >
+                    <span>🗺️ Sorot di Peta</span>
+                  </button>
+                  <button
+                    type="button"
+                    data-embed-vid="${item.videoId}"
+                    class="row-embed-vid-btn inline-flex items-center gap-1.5 ${isPlaying ? 'bg-charcoal text-white' : 'bg-leaf-light hover:bg-leaf text-leaf-dark hover:text-white'} font-bold text-xs px-3.5 py-2.5 rounded-xl transition-colors"
+                  >
+                    <span>${isPlaying ? '✕ Tutup Player' : '🎬 Putar di Sini'}</span>
+                  </button>
+                  <a
+                    href="${item.url}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 bg-pinred hover:bg-pinred-dark text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <span>Buka YouTube ↗</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Expandable Inline YouTube Embed Player -->
+              ${isPlaying ? `
+                <div class="mt-4 pl-0 lg:pl-12">
+                  <div class="relative w-full aspect-video max-w-3xl rounded-2xl overflow-hidden bg-black shadow-lg border-2 border-stone-200">
+                    <iframe
+                      class="w-full h-full"
+                      src="https://www.youtube.com/embed/${item.videoId}?autoplay=1&rel=0"
+                      title="${item.title}"
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+
+        container.querySelectorAll('.row-focus-map-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.dataset.rowMapId;
+            selectLocation(id);
+            document.getElementById('campusMapViewport').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        });
+
+        container.querySelectorAll('.row-embed-vid-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const vid = btn.dataset.embedVid;
+            state.activeVideoId = state.activeVideoId === vid ? null : vid;
+            renderMapYoutubeRows();
+          });
+        });
       }
 
       /* -------------------------------------------------------------------
@@ -2654,6 +2770,7 @@
         renderMapPins();
         renderSelectedLocationDetail();
         renderDirectoryList();
+        renderMapYoutubeRows();
 
         // Map Mode Switcher (Denah Bersih vs Satelit Hijau UI)
         const cleanBtn = document.getElementById('mapModeCleanBtn');
